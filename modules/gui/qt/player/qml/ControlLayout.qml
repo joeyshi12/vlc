@@ -148,7 +148,7 @@ FocusScope {
 
         Item {
             Layout.fillWidth: visible
-            visible: (controlLayout.alignment & Qt.AlignRight)
+            visible: !repeater.containsExpandingItem() && (controlLayout.alignment & Qt.AlignRight)
         }
 
         ControlRepeater {
@@ -168,7 +168,7 @@ FocusScope {
 
         Item {
             Layout.fillWidth: visible
-            visible: (controlLayout.alignment & Qt.AlignLeft)
+            visible: !repeater.containsExpandingItem() && (controlLayout.alignment & Qt.AlignLeft)
         }
     }
 }

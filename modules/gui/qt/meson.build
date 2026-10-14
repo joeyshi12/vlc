@@ -808,6 +808,7 @@ qml_modules += {
        'player/qml/controlbarcontrols/TeletextButton.qml',
        'player/qml/controlbarcontrols/TeletextColorButton.qml',
        'player/qml/controlbarcontrols/TeletextWidget.qml',
+       'player/qml/controlbarcontrols/TimelineWidget.qml',
        'player/qml/controlbarcontrols/VolumeWidget.qml',
        'player/qml/controlbarcontrols/Fallback.qml',
    ),

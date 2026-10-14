@@ -26,6 +26,7 @@ import VLC.MainInterface
 import VLC.Style
 import VLC.Widgets as Widgets
 import VLC.Player
+import VLC.PlayerControls
 import VLC.Util
 
 T.Pane {
@@ -42,7 +43,9 @@ T.Pane {
     implicitHeight: Math.max(implicitBackgroundHeight + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    topInset: sliderY
+    topInset: inlineTimeline ? 0 : sliderY
+
+    topPadding: inlineTimeline ? VLCStyle.dp(11, VLCStyle.scale) : 0
 
     bottomPadding: VLCStyle.margin_xsmall
 
@@ -52,6 +55,29 @@ T.Pane {
     property real sliderHeight: VLCStyle.heightBar_xxsmall
     property real bookmarksHeight: VLCStyle.controlBarBookmarksHeight
     property bool showRemainingTime: true
+
+    // True when the control layout contains the timeline control. The time
+    // labels and the seek bar are then shown inside the control row, and this
+    // control bar does not add its own seek bar row.
+    readonly property bool inlineTimeline: _inlineTimeline
+    property bool _inlineTimeline: false
+
+    function _updateInlineTimeline() {
+        const model = contentItem.playerControlLayout.model
+        _inlineTimeline = !!model && model.contains(ControlListModel.TIMELINE_WIDGET)
+    }
+
+    Connections {
+        target: root.contentItem.playerControlLayout.model
+        function onControlListChanged() { root._updateInlineTimeline() }
+    }
+
+    Connections {
+        target: root.contentItem.playerControlLayout
+        function onModelChanged() { root._updateInlineTimeline() }
+    }
+
+    Component.onCompleted: _updateInlineTimeline()
 
     property var menu: undefined
 
@@ -119,7 +145,8 @@ T.Pane {
     contentItem: ColumnLayout {
         spacing: VLCStyle.margin_xsmall
 
-        readonly property real sliderY: row2.y
+        // With the inline timeline, menus open above the top edge of the bar.
+        readonly property real sliderY: root.inlineTimeline ? -root.topPadding : row2.y
 
         property alias trackPositionSlider: trackPositionSlider
 
@@ -241,7 +268,7 @@ T.Pane {
                 id: bookmarksLoader
 
                 parent: root
-                active: MainCtx.mediaLibraryAvailable
+                active: MainCtx.mediaLibraryAvailable && !root.inlineTimeline
                 source: "qrc:///qt/qml/VLC/MediaLibrary/Bookmarks.qml"
 
                 x: root.leftPadding + trackPositionSlider.x + row2.Layout.leftMargin
@@ -273,6 +300,9 @@ T.Pane {
             visible: children.length > 0
 
             children: {
+                if (root.inlineTimeline)
+                    return []
+
                 switch (textPosition) {
                 case ControlBar.TimeTextPosition.AboveSlider:
                     return [mediaTime, mediaRemainingTime]
@@ -288,6 +318,9 @@ T.Pane {
             id: row2
 
             children: {
+                if (root.inlineTimeline)
+                    return []
+
                 switch (textPosition) {
                 case ControlBar.TimeTextPosition.Hide:
                 case ControlBar.TimeTextPosition.AboveSlider:
@@ -316,17 +349,21 @@ T.Pane {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.leftMargin: VLCStyle.margin_large
-            Layout.rightMargin: VLCStyle.margin_large
+            Layout.leftMargin: root.inlineTimeline ? VLCStyle.dp(20, VLCStyle.scale) : VLCStyle.margin_large
+            Layout.rightMargin: Layout.leftMargin
 
             identifier: root.identifier
 
-            implicitHeight: MainCtx.pinVideoControls ? VLCStyle.controlLayoutHeightPinned
-                                                     : VLCStyle.controlLayoutHeight
+            implicitHeight: (MainCtx.pinVideoControls || root.inlineTimeline) ? VLCStyle.controlLayoutHeightPinned
+                                                                              : VLCStyle.controlLayoutHeight
+
+            spacing: root.inlineTimeline ? VLCStyle.margin_small : VLCStyle.margin_normal
+            layoutSpacing: root.inlineTimeline ? 0 : VLCStyle.margin_xxlarge
 
             visible: !model?.empty ?? false
 
-            Navigation.upItem: trackPositionSlider.enabled ? trackPositionSlider : root.Navigation.upItem
+            Navigation.upItem: (trackPositionSlider.enabled && !root.inlineTimeline) ? trackPositionSlider
+                                                                                     : root.Navigation.upItem
 
             onRequestLockUnlockAutoHide: (lock) => root.requestLockUnlockAutoHide(lock)
 

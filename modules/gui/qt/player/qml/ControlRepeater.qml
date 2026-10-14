@@ -28,6 +28,16 @@ Repeater {
     property real availableWidth: Number.MAX_VALUE
     property real availableHeight: Number.MAX_VALUE
 
+    // Whether one of the visible controls grows to take the free width.
+    function containsExpandingItem() {
+        for (let i = 0; i < count; ++i) {
+            const loader = itemAt(i)
+            if (loader && loader.visible && loader.expanding)
+                return true
+        }
+        return false
+    }
+
     signal requestLockUnlockAutoHide(bool lock)
     signal menuOpened(var menu)
     ///incomming signal to request all menu and popup to close
@@ -54,9 +64,14 @@ Repeater {
 
         focus: (index === 0)
 
-        Layout.fillWidth: (item && item.Layout.minimumWidth > 0)
+        // A control with a positive minimum width can shrink down to it. A
+        // control that sets Layout.fillWidth also grows past its implicit width.
+        readonly property bool expanding: !!item && item.Layout.fillWidth
+
+        Layout.fillWidth: expanding || (item && item.Layout.minimumWidth > 0)
         Layout.minimumWidth: Layout.fillWidth ? item.Layout.minimumWidth : (item ? item.implicitWidth : -1)
-        Layout.maximumWidth: Layout.fillWidth ? (item ? item.implicitWidth : -1) : -1
+        Layout.maximumWidth: expanding ? Number.POSITIVE_INFINITY
+                                       : (Layout.fillWidth ? (item ? item.implicitWidth : -1) : -1)
 
         Layout.minimumHeight: 0
         Layout.maximumHeight: Math.min((item && item.implicitHeight <= 0) ? Number.MAX_VALUE : item.implicitHeight, repeater.availableHeight)
