@@ -470,7 +470,8 @@ FocusScope {
 
                     z: 99
                     color: sidebar.background.color
-                    visible: sidebar.visible && (stackViewTopLeftRadiusRectangle.topLeftRadius !== undefined)
+                    // The sidebar floats with a gap, so the page has no rounded corner.
+                    visible: false
 
                     anchors.left: stackView.left
                     anchors.leftMargin: -1
@@ -564,6 +565,7 @@ FocusScope {
             width: VLCStyle.isScreenReallySmall ? 0.0 : collapsedWidth
 
             property real collapsedWidth: VLCStyle.icon_normal + VLCStyle.margin_small + VLCStyle.margin_xsmall + VLCStyle.applicationHorizontalMargin
+                                          + 2 * sidebar.panelGap
 
             delegateShowText: (state === "expanded")
 
@@ -573,10 +575,10 @@ FocusScope {
 
             property int maximumWidth: Math.max(minimumWidth, (g_mainDisplay.width + sidebarResizeHandle.width) / 3)
 
-            topPadding: 0
-            leftPadding: 0
-            rightPadding: sidebarResizeHandle.visible ? sidebarResizeHandle.visualBorder.width : 0.0
-            bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_small
+            topPadding: sidebar.panelGap
+            leftPadding: sidebar.panelGap
+            rightPadding: sidebar.panelGap + (sidebarResizeHandle.visible ? sidebarResizeHandle.visualBorder.width : 0.0)
+            bottomPadding: sidebar.panelGap + VLCStyle.applicationVerticalMargin + VLCStyle.margin_small
 
             safeAreaLeftMargin: VLCStyle.applicationHorizontalMargin
 
@@ -673,7 +675,7 @@ FocusScope {
                 atRight: true
 
                 resizeHandle.visible: (sidebar.state === "expanded") && !VLCStyle.isScreenSmall
-                visualBorder.visible: !topLeftCornerBackground.visible
+                visualBorder.visible: false
 
                 minimumWidth: sidebar.minimumWidth
                 maximumWidth: sidebar.maximumWidth

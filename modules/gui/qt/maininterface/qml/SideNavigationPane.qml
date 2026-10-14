@@ -51,7 +51,16 @@ T.Pane {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
+    // The panel floats with a gap around it, as in the design. The gap is
+    // part of the paddings and of the insets of the background.
+    readonly property real panelGap: VLCStyle.dp(8, VLCStyle.scale)
+
     padding: VLCStyle.margin_normal
+
+    topInset: panelGap
+    bottomInset: panelGap
+    leftInset: panelGap + safeAreaLeftMargin
+    rightInset: panelGap + safeAreaRightMargin
 
     readonly property ColorContext colorContext: ColorContext {
         id: theme
@@ -88,9 +97,9 @@ T.Pane {
         }
     }
 
-    background: Widgets.AcrylicBackground {
-        enabled: root.useAcrylic
-        tintColor: theme.bg.primary
+    background: Rectangle {
+        radius: VLCStyle.dp(6, VLCStyle.scale)
+        color: theme.bg.primary
     }
 
     contentItem:  Item {
