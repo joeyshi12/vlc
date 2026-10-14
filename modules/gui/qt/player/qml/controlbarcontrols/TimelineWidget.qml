@@ -133,6 +133,27 @@ T.Control {
             blockStyle: true
             barHeight: VLCStyle.dp(28, VLCStyle.scale)
 
+            // Audio only media show the audio level, video shows the subtitle
+            // lines when enabled in the playback settings. The data comes from
+            // MediaTimeline, which Player.qml asks to read the media.
+            readonly property bool showWaveform: !root.paintOnly && MediaTimeline.waveformRequested
+                                                 && MediaTimeline.hasWaveform
+            readonly property int waveformBarCount: Math.max(0, Math.floor((width - VLCStyle.dp(8, VLCStyle.scale))
+                                                                          / waveformBarSpacing))
+            property int _waveformRevision: 0
+
+            Connections {
+                target: MediaTimeline
+                function onWaveformChanged() { trackPositionSlider._waveformRevision++ }
+            }
+
+            waveform: {
+                void(_waveformRevision)
+                return showWaveform ? MediaTimeline.waveform(waveformBarCount) : []
+            }
+
+            subtitleCues: (!root.paintOnly && MediaTimeline.subtitlesRequested) ? MediaTimeline.subtitleCues : []
+
             enabled: !root.paintOnly
                      && (Player.playingState === Player.PLAYING_STATE_PLAYING
                          || Player.playingState === Player.PLAYING_STATE_PAUSED)

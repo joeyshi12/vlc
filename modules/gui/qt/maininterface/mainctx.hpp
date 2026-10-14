@@ -105,6 +105,7 @@ class MainCtx : public QObject
     Q_PROPERTY(bool interfaceAlwaysOnTop READ isInterfaceAlwaysOnTop WRITE setInterfaceAlwaysOnTop NOTIFY interfaceAlwaysOnTopChanged FINAL)
     Q_PROPERTY(bool hasEmbededVideo READ hasEmbededVideo NOTIFY hasEmbededVideoChanged FINAL)
     Q_PROPERTY(bool showRemainingTime READ isShowRemainingTime WRITE setShowRemainingTime NOTIFY showRemainingTimeChanged FINAL)
+    Q_PROPERTY(bool seekBarSubtitleTimeline READ hasSeekBarSubtitleTimeline WRITE setSeekBarSubtitleTimeline NOTIFY seekBarSubtitleTimelineChanged FINAL)
     Q_PROPERTY(VLCVarChoiceModel* extraInterfaces READ getExtraInterfaces CONSTANT FINAL)
     Q_PROPERTY(double intfScaleFactor READ getIntfScaleFactor NOTIFY intfScaleFactorChanged FINAL)
     Q_PROPERTY(bool mediaLibraryAvailable READ hasMediaLibrary CONSTANT FINAL)
@@ -228,6 +229,7 @@ public:
     bool isInterfaceAlwaysOnTop() { return b_interfaceOnTop; }
     inline bool isHideAfterCreation() const { return b_hideAfterCreation; }
     inline bool isShowRemainingTime() const  { return m_showRemainingTime; }
+    inline bool hasSeekBarSubtitleTimeline() const { return m_seekBarSubtitleTimeline; }
     inline double getIntfScaleFactor() const { return m_intfScaleFactor; }
     Q_INVOKABLE inline double getIntfUserScaleFactor() const { return m_intfUserScaleFactor; }
     inline int CSDBorderSize() const { return 10; }
@@ -429,6 +431,7 @@ protected:
     bool m_hasEmbededVideo = false;
     VideoSurfaceProvider* m_videoSurfaceProvider = nullptr;
     bool m_showRemainingTime = false;
+    bool m_seekBarSubtitleTimeline = false;
 
     /* */
     QSettings           *settings = nullptr;
@@ -518,6 +521,7 @@ public slots:
     void setPlayerPlaylistWidth( double factor );
     void setInterfaceAlwaysOnTop( bool );
     void setShowRemainingTime( bool );
+    void setSeekBarSubtitleTimeline( bool );
     void setGridView( bool );
     void setGrouping( Grouping );
     void setAlbumSections( bool );
@@ -568,6 +572,7 @@ signals:
     void interfaceAlwaysOnTopChanged(bool);
     void hasEmbededVideoChanged(bool);
     void showRemainingTimeChanged(bool);
+    void seekBarSubtitleTimelineChanged(bool);
     void gridViewChanged( bool );
     void hasGridListModeChanged( bool );
     void groupingChanged( Grouping );

@@ -1128,6 +1128,21 @@ FocusScope {
         }
     }
 
+    // Ask for the seek bar data shown by the timeline control: the audio
+    // level for audio only media, the subtitle lines for video when enabled.
+    Binding {
+        target: MediaTimeline
+        property: "waveformRequested"
+        value: controlBar.inlineTimeline && Player.isStarted && Player.videoTracks.count === 0
+    }
+
+    Binding {
+        target: MediaTimeline
+        property: "subtitlesRequested"
+        value: controlBar.inlineTimeline && Player.isStarted && Player.videoTracks.count > 0
+               && MainCtx.seekBarSubtitleTimeline
+    }
+
     // Keep the controls visible while a side panel is open.
     readonly property bool _sidePanelOpen: playlistVisibility.isPlaylistVisible || PlayerPanelState.settingsVisible
     on_SidePanelOpenChanged: lockUnlockAutoHide(_sidePanelOpen)
