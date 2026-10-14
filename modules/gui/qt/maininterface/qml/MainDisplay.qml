@@ -983,13 +983,11 @@ FocusScope {
             id: playerPip
             anchors {
                 bottom: loaderUpdatePane.top
-                left: parent.left
+                right: parent.right
                 bottomMargin: VLCStyle.margin_normal
-                leftMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
+                rightMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
             }
 
-            width: VLCStyle.dp(320, VLCStyle.scale)
-            height: VLCStyle.dp(180, VLCStyle.scale)
             z: 4
             visible: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
             enabled: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo

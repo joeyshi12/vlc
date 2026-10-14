@@ -59,6 +59,22 @@
         <file alias="volume-low.svg">pixmaps/menu/volume-low.svg</file>
         <file alias="volume-muted.svg">pixmaps/menu/volume-muted.svg</file>
     </qresource>
+    <qresource prefix="/redesign">
+        <file alias="audio.svg">pixmaps/redesign/audio.svg</file>
+        <file alias="subtitles.svg">pixmaps/redesign/subtitles.svg</file>
+        <file alias="playback-settings.svg">pixmaps/redesign/playback-settings.svg</file>
+        <file alias="lists.svg">pixmaps/redesign/lists.svg</file>
+        <file alias="previous.svg">pixmaps/redesign/previous.svg</file>
+        <file alias="next.svg">pixmaps/redesign/next.svg</file>
+        <file alias="play.svg">pixmaps/redesign/play.svg</file>
+        <file alias="pause.svg">pixmaps/redesign/pause.svg</file>
+        <file alias="folder.svg">pixmaps/redesign/folder.svg</file>
+        <file alias="artist.svg">pixmaps/redesign/artist.svg</file>
+        <file alias="open.svg">pixmaps/redesign/open.svg</file>
+        <file alias="close.svg">pixmaps/redesign/close.svg</file>
+        <file alias="replay.svg">pixmaps/redesign/replay.svg</file>
+        <file alias="queue.svg">pixmaps/redesign/queue.svg</file>
+    </qresource>
     <qresource prefix="/misc">
         <file alias="cone.svg">pixmaps/misc/cone.svg</file>
         <file alias="new_indicator.svg">pixmaps/misc/new_indicator.svg</file>

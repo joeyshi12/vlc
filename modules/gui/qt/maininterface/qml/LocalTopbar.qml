@@ -47,10 +47,8 @@ T.ToolBar {
         && !MainCtx.hasToolbarMenu
 
     //whether the navigation pannel is actually visible or not
-    property alias navigationVisible: navigationVisibilty.checked
+    property bool navigationVisible: false
     property alias playqueueVisible: playlistBtn.checked
-
-    property alias navigationButton: navigationVisibilty
 
     signal toggleNavigationVisibility()
     signal togglePlayqueueVisibility()
@@ -102,27 +100,9 @@ T.ToolBar {
                 Navigation.rightItem: playqueueButtonsTop
 
                 Widgets.IconToolButton {
-                    id: navigationVisibilty
+                    id: historyBack
 
                     focus: true
-
-                    text: VLCIcons.panel_left
-                    description: qsTr("Show navigation menu")
-
-                    AccessibleCompat.id: "sidebarToggleButton"
-
-                    font.pixelSize: VLCStyle.icon_banner
-                    height: VLCStyle.bannerButton_height
-                    width: VLCStyle.bannerButton_width
-
-                    onClicked: root.toggleNavigationVisibility()
-
-                    Navigation.parentItem: navigationButtons
-                    Navigation.rightItem: historyBack
-                }
-
-                Widgets.IconToolButton {
-                    id: historyBack
 
                     font.pixelSize: VLCStyle.icon_banner
                     text: VLCIcons.back
@@ -136,13 +116,7 @@ T.ToolBar {
                     onClicked: History.previous()
                     enabled: !History.previousEmpty
 
-                    onEnabledChanged: {
-                        if (historyBack.activeFocus)
-                            navigationVisibilty.focus = true
-                    }
-
                     Navigation.parentItem: navigationButtons
-                    Navigation.leftItem: navigationVisibilty
                     Navigation.rightItem: playlistBtn
                 }
 

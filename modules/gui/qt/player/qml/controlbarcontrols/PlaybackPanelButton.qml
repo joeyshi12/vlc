@@ -24,8 +24,8 @@ import VLC.Player
 import VLC.Util
 
 // Opens the player settings panel on the Playback tab.
-Widgets.IconToolButton {
-    text: VLCIcons.effect_filter
+Widgets.SvgToolButton {
+    iconName: "playback-settings"
     description: qsTr("Playback settings")
 
     checked: PlayerPanelState.settingsVisible
