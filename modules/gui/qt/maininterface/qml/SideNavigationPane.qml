@@ -53,6 +53,14 @@ T.Pane {
 
     // The panel floats with a gap around it, as in the design. The gap is
     // part of the paddings and of the insets of the background.
+    // SVG icon (pixmaps/redesign/nav-<name>.svg) of the entries of the first level
+    readonly property var iconNames: ({
+        "home": "home",
+        "video": "videos",
+        "music": "songs",
+        "network": "streaming"
+    })
+
     readonly property real panelGap: VLCStyle.dp(8, VLCStyle.scale)
 
     padding: VLCStyle.margin_normal
@@ -172,9 +180,14 @@ T.Pane {
                     width: ListView.view.contentWidth
                     height: preferredHeight
 
-                    property real preferredHeight: shouldShow ? VLCStyle.buttonHeightNavigationPane : 0.0
+                    // 32 px for the item and 14 px between the items, as in the design
+                    property real preferredHeight: shouldShow ? VLCStyle.dp(46, VLCStyle.scale) : 0.0
 
-                    leftPadding: root.safeAreaLeftMargin + VLCStyle.margin_xsmall
+                    leftPadding: root.safeAreaLeftMargin + VLCStyle.dp(16, VLCStyle.scale)
+
+                    panelColor: theme.bg.primary
+                    iconName: (depth === 0 && uri && uri.length > 0) ? (root.iconNames[uri[0]] ?? "") : ""
+                    iconSelected: highlighted && depth === 0
                     rightPadding: root.safeAreaRightMargin
 
                     leftInset: root.safeAreaLeftMargin + implicitLeftInset

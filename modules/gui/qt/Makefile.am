@@ -956,6 +956,17 @@ libqt_plugin_la_RES = \
 	pixmaps/redesign/close.svg \
 	pixmaps/redesign/replay.svg \
 	pixmaps/redesign/queue.svg \
+	pixmaps/redesign/nav-home.svg \
+	pixmaps/redesign/nav-home-selected.svg \
+	pixmaps/redesign/nav-videos.svg \
+	pixmaps/redesign/nav-videos-selected.svg \
+	pixmaps/redesign/nav-songs.svg \
+	pixmaps/redesign/nav-songs-selected.svg \
+	pixmaps/redesign/nav-streaming.svg \
+	pixmaps/redesign/nav-streaming-selected.svg \
+	pixmaps/redesign/nav-playlist.svg \
+	pixmaps/redesign/nav-recent.svg \
+	pixmaps/redesign/nav-add.svg \
 	pixmaps/misc/new_indicator.svg \
 	pixmaps/misc/theme_dark.svg \
 	pixmaps/misc/theme_daynight.svg \
