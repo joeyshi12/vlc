@@ -148,7 +148,7 @@ QtObject {
     readonly property int defaultWidthPlaylist: MainCtx.dp(300, scale);
     readonly property int closedWidthPlaylist: MainCtx.dp(20, scale);
 
-    readonly property int expandNavigationPaneWidth: MainCtx.dp(160, scale);
+    readonly property int expandNavigationPaneWidth: MainCtx.dp(217, scale); // width of the sidebar in the design, with its gaps
     readonly property int buttonHeightNavigationPane: MainCtx.dp(35, scale);
 
     readonly property int widthSearchInput: MainCtx.dp(200, scale);
