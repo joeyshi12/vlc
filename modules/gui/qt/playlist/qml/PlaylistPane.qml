@@ -732,7 +732,7 @@ T.Pane {
 
         focus: true
 
-        font.pixelSize: VLCStyle.icon_banner
+        font.pixelSize: VLCStyle.icon_normal
         text: VLCIcons.playlist
         description: qsTr("Play queue")
 

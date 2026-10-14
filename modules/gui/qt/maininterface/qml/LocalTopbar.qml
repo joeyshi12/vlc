@@ -104,7 +104,7 @@ T.ToolBar {
 
                     focus: true
 
-                    font.pixelSize: VLCStyle.icon_banner
+                    font.pixelSize: VLCStyle.icon_normal
                     text: VLCIcons.back
                     description: qsTr("Previous")
 
@@ -123,8 +123,8 @@ T.ToolBar {
                 Widgets.BannerCone {
                     id: logo
 
-                    sourceSize.width: VLCStyle.bannerButton_height
-                    sourceSize.height: VLCStyle.bannerButton_height
+                    sourceSize.width: VLCStyle.icon_normal
+                    sourceSize.height: VLCStyle.icon_normal
                     color: theme.accent
                 }
             }
@@ -173,7 +173,7 @@ T.ToolBar {
                     id: menuBtn
 
                     visible: !MainCtx.hasToolbarMenu
-                    font.pixelSize: VLCStyle.icon_banner
+                    font.pixelSize: VLCStyle.icon_normal
                     text: VLCIcons.more
                     description: qsTr("Menu")
                     width: VLCStyle.bannerButton_width

@@ -19,6 +19,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Layouts
+import QtQuick.Window
 
 
 import VLC.MainInterface
@@ -32,6 +33,16 @@ T.ItemDelegate {
     // Properties
 
     property string iconTxt: ""
+
+    // Name of an SVG icon of the design (pixmaps/redesign/nav-<name>.svg). It
+    // is used instead of `iconTxt` when it is set. The icon variant that is
+    // drawn filled is used for `iconSelected`.
+    property string iconName: ""
+    property bool iconSelected: false
+
+    // Colour of the panel behind the icon, for the parts of the filled icon
+    // that are cut out.
+    property color panelColor: "#191919"
 
     property bool showText: true
 
@@ -55,8 +66,8 @@ T.ItemDelegate {
     property real implicitLeftInset: VLCStyle.margin_xxsmall
     property real implicitRightInset: VLCStyle.margin_xxsmall
 
-    property real implicitTopInset: VLCStyle.margin_xxxsmall
-    property real implicitBottomInset: VLCStyle.margin_xxxsmall
+    property real implicitTopInset: VLCStyle.dp(7, VLCStyle.scale)
+    property real implicitBottomInset: VLCStyle.dp(7, VLCStyle.scale)
 
     // Accessible
 
@@ -103,31 +114,20 @@ T.ItemDelegate {
         border.color: visualFocus ? theme.visualFocus : "transparent"
 
         radius: control.radius
-
-        Widgets.CurrentIndicator {
-            anchors {
-                left: parent.left
-                leftMargin: VLCStyle.margin_xxxsmall
-                verticalCenter: parent.verticalCenter
-            }
-            implicitHeight: parent.height / 2
-            visible: control.checked
-
-            radius: control.radius / 2
-        }
     }
 
     contentItem: RowLayout {
-        spacing: VLCStyle.margin_xsmall
+        spacing: VLCStyle.dp(8, VLCStyle.scale)
 
         Item {
-            Layout.preferredWidth: VLCStyle.icon_banner
+            // The icon with 4 px around it, as in the design
+            Layout.preferredWidth: VLCStyle.dp(30, VLCStyle.scale)
             Layout.fillHeight: true
 
             Widgets.IconLabel {
                 id: iconLabel
 
-                visible: text.length > 0
+                visible: control.iconName === "" && text.length > 0
 
                 anchors.centerIn: parent
 
@@ -136,9 +136,40 @@ T.ItemDelegate {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
 
-                color: (control.highlighted || control.checked) ? theme.accent : theme.fg.primary
+                color: theme.fg.primary
 
-                font.pixelSize: VLCStyle.icon_banner
+                font.pixelSize: VLCStyle.icon_normal
+            }
+
+            Image {
+                id: svgIcon
+
+                visible: control.iconName !== ""
+
+                anchors.centerIn: parent
+                width: VLCStyle.icon_normal
+                height: VLCStyle.icon_normal
+
+                property real _eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
+
+                sourceSize: Qt.size(width * _eDPR, height * _eDPR)
+
+                // SVG colours can not be transparent, so the transparency of
+                // the colour is applied to the image.
+                opacity: theme.fg.primary.a
+
+                readonly property color _color: Qt.rgba(theme.fg.primary.r, theme.fg.primary.g, theme.fg.primary.b, 1.0)
+
+                source: {
+                    if (control.iconName === "")
+                        return ""
+                    const builder = SVGColorImage.colorize("qrc:///redesign/nav-" + control.iconName
+                                                           + (control.iconSelected ? "-selected" : "") + ".svg")
+                    return (control.iconSelected ? builder.any({ "#D37918": _color, "#8F8F8F": control.panelColor })
+                                                 : builder.any({ "#8F8F8F": _color })).uri()
+                }
+
+                Accessible.ignored: true
             }
         }
 
@@ -152,15 +183,15 @@ T.ItemDelegate {
 
             verticalAlignment: Text.AlignVCenter
 
-            color: control.checked ? theme.fg.secondary : theme.fg.primary
+            color: theme.fg.primary
 
             elide: Text.ElideRight
 
             visible: control.showText
 
-            font.pixelSize: VLCStyle.fontSize_normal
+            font.pixelSize: VLCStyle.fontSize_large
 
-            font.weight: control.checked ? Font.DemiBold : Font.Normal
+            font.weight: Font.Normal
 
             //button text is already exposed
             Accessible.ignored: true
