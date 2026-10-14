@@ -575,7 +575,8 @@ FocusScope {
 
             property int maximumWidth: Math.max(minimumWidth, (g_mainDisplay.width + sidebarResizeHandle.width) / 3)
 
-            topPadding: sidebar.panelGap + VLCStyle.dp(12, VLCStyle.scale)
+            // 8 px between the panel edge and the first button (a row is 6 px higher than its button)
+            topPadding: sidebar.panelGap + VLCStyle.dp(5, VLCStyle.scale)
             leftPadding: sidebar.panelGap
             rightPadding: sidebar.panelGap + (sidebarResizeHandle.visible ? sidebarResizeHandle.visualBorder.width : 0.0)
             bottomPadding: sidebar.panelGap + VLCStyle.applicationVerticalMargin + VLCStyle.margin_small
