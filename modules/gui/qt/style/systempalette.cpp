@@ -696,7 +696,9 @@ void SystemPalette::makeDarkPalette()
 
     {
         C::ColorSet CS = C::View;
-        setColor(CS, C::Bg, C::Primary, C::Normal, darkGrey300 );
+        // Background of the pages ("Dark/BG/B1" of the design). The navigation
+        // and the play queue panels use the lighter Window colour.
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#0E0E0E") );
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black );
 
         setColor(CS, C::Fg, C::Primary, C::Normal, Qt::white );

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2020 VLC authors and VideoLAN
+ * Copyright (C) 2026 VLC authors and VideoLAN
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
  *****************************************************************************/
+
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Templates as T
 
 import VLC.MainInterface
@@ -25,10 +27,16 @@ import VLC.Playlist
 import VLC.Player
 import VLC.Util
 
+// Small player that floats over the library while a video is playing: the
+// video with buttons shown on hover, the seek bar, the title, the folder and
+// the artist. The button on the right opens the play queue above the video.
 T.Control {
     id: root
-    width: Math.round(VLCStyle.dp(320, VLCStyle.scale))
-    height: Math.round(VLCStyle.dp(180, VLCStyle.scale))
+
+    width: Math.round(VLCStyle.dp(391, VLCStyle.scale))
+    height: implicitHeight
+
+    implicitHeight: content.implicitHeight
 
     objectName: "pip window"
 
@@ -37,10 +45,31 @@ T.Control {
     property real dragYMin: undefined
     property real dragYMax: undefined
 
-    property int textStyle: Text.Outline
-
     // `hideControls` being `false` does not necessarily mean that the buttons are shown:
     property bool hideControls: MainCtx.usingTouch // By default controls are hidden with touch
+
+    property bool queueVisible: false
+
+    readonly property bool _controlsShown: !root.hideControls &&
+                                          (hoverHandler.hovered ||
+                                           playButton.hovered ||
+                                           previousButton.hovered ||
+                                           nextButton.hovered ||
+                                           closeButton.hovered ||
+                                           popoutButton.hovered)
+
+    readonly property string _folderName: {
+        const url = Player.url.toString()
+        if (!url.startsWith("file:"))
+            return ""
+        const parts = decodeURIComponent(url).split("/")
+        return (parts.length > 1) ? parts[parts.length - 2] : ""
+    }
+
+    readonly property ColorContext colorContext: ColorContext {
+        id: theme
+        colorSet: ColorContext.Window
+    }
 
     Accessible.role: Accessible.Graphic
     Accessible.focusable: false
@@ -57,152 +86,343 @@ T.Control {
         root.anchors.horizontalCenter = undefined
     }
 
-    DoubleClickIgnoringItem {
-        anchors.fill: parent
+    // The card can be moved by dragging any part that is not a control.
+    DragHandler {
+        id: dragHandler
 
-        TapHandler {
-            gesturePolicy: TapHandler.WithinBounds
+        target: root
 
-            onDoubleTapped: (eventPoint, button) => {
-                // Docs are lying, there is no `deviceType`: QTBUG-135104
-                if (eventPoint.device.type !== PointerDevice.TouchScreen)
-                    MainCtx.playerView = true
+        cursorShape: Qt.DragMoveCursor
+
+        dragThreshold: 0
+
+        grabPermissions: PointerHandler.CanTakeOverFromAnything
+
+        xAxis.minimum: root.dragXMin
+        xAxis.maximum: root.dragXMax
+        yAxis.minimum: root.dragYMin
+        yAxis.maximum: root.dragYMax
+    }
+
+    background: Rectangle {
+        radius: VLCStyle.dp(14, VLCStyle.scale)
+        color: theme.bg.primary
+
+        Widgets.RoundedRectangleShadow {
+            z: -1
+            blurRadius: VLCStyle.dp(12, VLCStyle.scale)
+            color: Qt.rgba(0, 0, 0, 0.38)
+        }
+    }
+
+    contentItem: ColumnLayout {
+        id: content
+
+        spacing: 0
+
+        // Play queue
+        ColumnLayout {
+            visible: root.queueVisible
+
+            Layout.fillWidth: true
+            spacing: 0
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: VLCStyle.dp(70, VLCStyle.scale)
+
+                color: theme.bg.secondary
+                radius: VLCStyle.dp(14, VLCStyle.scale)
+
+                // Square bottom corners
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: parent.radius
+                    color: parent.color
+                }
+
+                Widgets.ListLabel {
+                    anchors.centerIn: parent
+                    font.weight: Font.Normal
+                    font.pixelSize: VLCStyle.fontSize_xlarge
+                    color: theme.fg.secondary
+                    text: qsTr("Queue")
+                }
             }
 
-            onTapped: (eventPoint, button) => {
-                // Docs are lying, there is no `deviceType`: QTBUG-135104
-                if (eventPoint.device.type === PointerDevice.TouchScreen) {
-                    // Breaking the initial binding is intentional here:
-                    root.hideControls = !root.hideControls
-                } else {
-                    MainPlaylistController.togglePlayPause()
+            PlaylistPane {
+                id: queuePane
+
+                Layout.fillWidth: true
+                Layout.preferredHeight: VLCStyle.dp(330, VLCStyle.scale)
+
+                compactHeader: true
+                useAcrylic: false
+                background: null
+                topPadding: 0
+                bottomPadding: VLCStyle.margin_xsmall
+                leftPadding: 0
+                rightPadding: 0
+            }
+        }
+
+        // Video
+        Item {
+            id: videoFrame
+
+            Layout.fillWidth: true
+            Layout.margins: VLCStyle.dp(8, VLCStyle.scale)
+            Layout.bottomMargin: 0
+            implicitHeight: Math.round(width * 9 / 16)
+
+            VideoSurface {
+                id: videoSurface
+
+                anchors.fill: parent
+                videoSurfaceProvider: MainCtx.videoSurfaceProvider
+
+                color: "transparent"
+            }
+
+            // Darkens the video while the controls are shown.
+            Rectangle {
+                anchors.fill: parent
+                color: Qt.rgba(0, 0, 0, 0.65)
+                opacity: root._controlsShown ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation { duration: VLCStyle.duration_veryShort }
+                }
+            }
+
+            // Border of the video
+            Rectangle {
+                anchors.fill: parent
+                color: "transparent"
+                radius: VLCStyle.dp(8, VLCStyle.scale)
+                border.width: VLCStyle.dp(2, VLCStyle.scale)
+                border.color: theme.bg.secondary
+            }
+
+            DoubleClickIgnoringItem {
+                anchors.fill: parent
+
+                TapHandler {
+                    gesturePolicy: TapHandler.WithinBounds
+
+                    onDoubleTapped: (eventPoint, button) => {
+                        // Docs are lying, there is no `deviceType`: QTBUG-135104
+                        if (eventPoint.device.type !== PointerDevice.TouchScreen)
+                            MainCtx.playerView = true
+                    }
+
+                    onTapped: (eventPoint, button) => {
+                        // Docs are lying, there is no `deviceType`: QTBUG-135104
+                        if (eventPoint.device.type === PointerDevice.TouchScreen) {
+                            // Breaking the initial binding is intentional here:
+                            root.hideControls = !root.hideControls
+                        } else {
+                            MainPlaylistController.togglePlayPause()
+                        }
+                    }
+                }
+
+                HoverHandler {
+                    id: hoverHandler
+
+                    grabPermissions: PointerHandler.CanTakeOverFromAnything
+                    cursorShape: Qt.ArrowCursor
+
+                    Component.onCompleted: {
+                        if (typeof blocking === 'boolean')
+                            blocking = true // Qt 6.3 feature
+                    }
+                }
+            }
+
+            Item {
+                anchors.fill: parent
+
+                visible: root._controlsShown
+
+                // Raise the controls so that the handlers of the video do
+                // not handle their events.
+                z: 1
+
+                Widgets.SvgToolButton {
+                    id: closeButton
+
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        margins: VLCStyle.margin_small
+                    }
+
+                    iconName: "close"
+                    iconSize: VLCStyle.dp(24, VLCStyle.scale)
+                    color: "white"
+                    description: qsTr("close video")
+
+                    AccessibleCompat.id: "pipCloseButton"
+
+                    onClicked: MainPlaylistController.stop()
+                }
+
+                Widgets.SvgToolButton {
+                    id: popoutButton
+
+                    anchors {
+                        top: parent.top
+                        right: parent.right
+                        margins: VLCStyle.margin_small
+                    }
+
+                    iconName: "open"
+                    iconSize: VLCStyle.dp(24, VLCStyle.scale)
+                    color: "white"
+                    description: qsTr("maximize player")
+
+                    AccessibleCompat.id: "pipFullscreenButton"
+
+                    onClicked: MainCtx.playerView = true
+                }
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: VLCStyle.dp(60, VLCStyle.scale)
+
+                    Widgets.SvgToolButton {
+                        id: previousButton
+
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        iconName: "previous"
+                        iconSize: VLCStyle.dp(40, VLCStyle.scale)
+                        color: "white"
+                        enabled: MainPlaylistController.hasPrev
+                        description: qsTr("Previous")
+
+                        onClicked: MainPlaylistController.prev()
+                    }
+
+                    Widgets.SvgToolButton {
+                        id: playButton
+
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        iconName: (Player.playingState !== Player.PLAYING_STATE_PAUSED
+                                   && Player.playingState !== Player.PLAYING_STATE_STOPPED) ? "pause" : "play"
+                        iconSize: VLCStyle.dp(56, VLCStyle.scale)
+                        color: "white"
+                        description: qsTr("play/pause")
+
+                        AccessibleCompat.id: "pipPlayButton"
+
+                        onClicked: MainPlaylistController.togglePlayPause()
+                    }
+
+                    Widgets.SvgToolButton {
+                        id: nextButton
+
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        iconName: "next"
+                        iconSize: VLCStyle.dp(40, VLCStyle.scale)
+                        color: "white"
+                        enabled: MainPlaylistController.hasNext
+                        description: qsTr("Next")
+
+                        onClicked: MainPlaylistController.next()
+                    }
                 }
             }
         }
 
-        DragHandler {
-            id: dragHandler
+        // Seek bar
+        SliderBar {
+            Layout.fillWidth: true
+            Layout.leftMargin: VLCStyle.dp(8, VLCStyle.scale)
+            Layout.rightMargin: VLCStyle.dp(8, VLCStyle.scale)
+            Layout.topMargin: VLCStyle.dp(8, VLCStyle.scale)
 
-            target: root
+            blockStyle: true
+            barHeight: VLCStyle.dp(16, VLCStyle.scale)
 
-            cursorShape: Qt.DragMoveCursor
+            enabled: Player.playingState === Player.PLAYING_STATE_PLAYING
+                     || Player.playingState === Player.PLAYING_STATE_PAUSED
 
-            dragThreshold: 0
-
-            grabPermissions: PointerHandler.CanTakeOverFromAnything
-
-            xAxis.minimum: root.dragXMin
-            xAxis.maximum: root.dragXMax
-            yAxis.minimum: root.dragYMin
-            yAxis.maximum: root.dragYMax
+            Accessible.role: Accessible.Slider
+            Accessible.name: qsTr("Progress")
         }
 
-        HoverHandler {
-            id: hoverHandler
+        // Title
+        Widgets.ListLabel {
+            Layout.fillWidth: true
+            Layout.leftMargin: VLCStyle.dp(16, VLCStyle.scale)
+            Layout.rightMargin: VLCStyle.dp(16, VLCStyle.scale)
+            Layout.topMargin: VLCStyle.dp(16, VLCStyle.scale)
 
-            grabPermissions: PointerHandler.CanTakeOverFromAnything
-            cursorShape: Qt.ArrowCursor
-
-            Component.onCompleted: {
-                if (typeof blocking === 'boolean')
-                    blocking = true // Qt 6.3 feature
-            }
-        }
-    }
-
-    background: VideoSurface {
-        id: videoSurface
-        videoSurfaceProvider: MainCtx.videoSurfaceProvider
-
-        color: (hoverHandler.hovered ||
-                playButton?.hovered ||
-                closeButton?.hovered ||
-                fullscreenButton?.hovered) ? "#10000000" : "transparent"
-
-        // It is acceptable for effects to exceed the boundaries of the
-        // parent. They are an exception to the "hypothetical clip test".
-        Widgets.DefaultShadow {
-
-        }
-    }
-
-    contentItem: Item {
-        visible: !root.hideControls &&
-                 (hoverHandler.hovered ||
-                 playButton.hovered ||
-                 closeButton.hovered ||
-                 fullscreenButton.hovered)
-
-        // Raise the content item so that the handlers of the control do
-        // not handle events that are to be handled by the handlers/items
-        // of the content item. Raising the content item should be fine
-        // because content item is supposed to be the foreground item.
-        z: 1
-
-        Widgets.IconButton {
-            id: playButton
-
-            anchors.centerIn: parent
-
-            font.pixelSize: VLCStyle.icon_large
-
-            description: qsTr("play/pause")
-
-            AccessibleCompat.id: "pipPlayButton"
-
-            text: (Player.playingState !== Player.PLAYING_STATE_PAUSED
-                   && Player.playingState !== Player.PLAYING_STATE_STOPPED)
-                  ? VLCIcons.pause_filled
-                  : VLCIcons.play_filled
-
-            textStyle: root.textStyle
-
-            onClicked: MainPlaylistController.togglePlayPause()
+            font.weight: Font.Normal
+            font.pixelSize: VLCStyle.fontSize_xlarge
+            color: theme.fg.secondary
+            text: Player.title
         }
 
-        Widgets.IconButton {
-            id: closeButton
+        // Folder, artist and the queue button
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: VLCStyle.dp(12, VLCStyle.scale)
+            Layout.rightMargin: VLCStyle.dp(12, VLCStyle.scale)
+            Layout.topMargin: VLCStyle.dp(8, VLCStyle.scale)
+            Layout.bottomMargin: VLCStyle.dp(12, VLCStyle.scale)
 
-            anchors {
-                top: parent.top
-                topMargin: VLCStyle.margin_small
-                right: parent.right
-                rightMargin: VLCStyle.margin_small
+            spacing: VLCStyle.dp(8, VLCStyle.scale)
+
+            component Detail : RowLayout {
+                id: detail
+
+                property string iconName
+                property alias text: label.text
+
+                visible: label.text !== ""
+                spacing: VLCStyle.dp(4, VLCStyle.scale)
+
+                Widgets.SvgToolButton {
+                    iconName: detail.iconName
+                    description: label.text
+                    paintOnly: true
+                }
+
+                Widgets.ListLabel {
+                    id: label
+
+                    font.weight: Font.Normal
+                    font.pixelSize: VLCStyle.fontSize_xlarge
+                    color: theme.fg.secondary
+                }
             }
 
-            font.pixelSize: VLCStyle.icon_PIP
-            description: qsTr("close video")
-
-            AccessibleCompat.id: "pipCloseButton"
-
-            text: VLCIcons.close
-
-            textStyle: root.textStyle
-
-            onClicked: MainPlaylistController.stop()
-        }
-
-        Widgets.IconButton {
-            id: fullscreenButton
-
-            anchors {
-                top: parent.top
-                topMargin: VLCStyle.margin_small
-                left: parent.left
-                leftMargin: VLCStyle.margin_small
+            Detail {
+                iconName: "folder"
+                text: root._folderName
             }
 
-            font.pixelSize: VLCStyle.icon_PIP
+            Detail {
+                iconName: "artist"
+                text: Player.artist
+            }
 
-            description: qsTr("maximize player")
+            Item { Layout.fillWidth: true }
 
-            AccessibleCompat.id: "pipFullscreenButton"
+            Widgets.SvgToolButton {
+                iconName: "lists"
+                checked: root.queueVisible
+                description: qsTr("Play queue")
 
-            text: VLCIcons.fullscreen
-
-            textStyle: root.textStyle
-
-            onClicked: MainCtx.playerView = true
+                onClicked: root.queueVisible = !root.queueVisible
+            }
         }
     }
 }

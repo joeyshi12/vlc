@@ -24,8 +24,8 @@ import VLC.Player
 import VLC.Util
 
 // Opens the player settings panel on the Audio tab.
-Widgets.IconToolButton {
-    text: VLCIcons.topbar_music
+Widgets.SvgToolButton {
+    iconName: "audio"
     description: qsTr("Audio settings")
 
     checked: PlayerPanelState.settingsVisible

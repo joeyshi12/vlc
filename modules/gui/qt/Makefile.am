@@ -230,6 +230,8 @@ libqt_plugin_la_SOURCES = \
 	medialibrary/mlqueryparams.hpp \
 	medialibrary/mlrecentmediamodel.cpp \
 	medialibrary/mlrecentmediamodel.hpp \
+	medialibrary/mlrecentaudiomodel.cpp \
+	medialibrary/mlrecentaudiomodel.hpp \
 	medialibrary/mlrecentvideomodel.cpp \
 	medialibrary/mlrecentvideomodel.hpp \
 	medialibrary/mlurlmodel.cpp \
@@ -467,6 +469,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	medialibrary/mlthreadpool.moc.cpp \
 	medialibrary/mlqmltypes.moc.cpp \
 	medialibrary/mlrecentmediamodel.moc.cpp \
+	medialibrary/mlrecentaudiomodel.moc.cpp \
 	medialibrary/mlrecentvideomodel.moc.cpp \
 	medialibrary/mlurlmodel.moc.cpp \
 	medialibrary/mlvideo.moc.cpp \
@@ -939,6 +942,20 @@ libqt_plugin_la_RES = \
 	pixmaps/menu/volume-low.svg \
 	pixmaps/menu/volume-muted.svg \
 	pixmaps/misc/cone.svg \
+	pixmaps/redesign/audio.svg \
+	pixmaps/redesign/subtitles.svg \
+	pixmaps/redesign/playback-settings.svg \
+	pixmaps/redesign/lists.svg \
+	pixmaps/redesign/previous.svg \
+	pixmaps/redesign/next.svg \
+	pixmaps/redesign/play.svg \
+	pixmaps/redesign/pause.svg \
+	pixmaps/redesign/folder.svg \
+	pixmaps/redesign/artist.svg \
+	pixmaps/redesign/open.svg \
+	pixmaps/redesign/close.svg \
+	pixmaps/redesign/replay.svg \
+	pixmaps/redesign/queue.svg \
 	pixmaps/misc/new_indicator.svg \
 	pixmaps/misc/theme_dark.svg \
 	pixmaps/misc/theme_daynight.svg \
@@ -1346,6 +1363,7 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/IconLabel.qml \
 	widgets/qml/IconButton.qml \
 	widgets/qml/IconToolButton.qml \
+	widgets/qml/SvgToolButton.qml \
 	widgets/qml/IconTrackButton.qml \
 	widgets/qml/ImageToolButton.qml \
 	widgets/qml/ListViewExt.qml \

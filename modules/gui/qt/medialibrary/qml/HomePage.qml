@@ -65,12 +65,10 @@ Widgets.PageExt {
         // `focus` is checked, because that indicates the item that has the focus within the focus scope
         if (continueWatchingRow.focus)
             continueWatchingRow.setCurrentItemFocus(reason)
-        else if (favoritesRow.focus)
-            favoritesRow.setCurrentItemFocus(reason)
-        else if (newVideoRow.focus)
-            newVideoRow.setCurrentItemFocus(reason)
-        else if (newMusicRow.focus)
-            newMusicRow.setCurrentItemFocus(reason)
+        else if (listenAgainRow.focus)
+            listenAgainRow.setCurrentItemFocus(reason)
+        else if (foldersRow.focus)
+            foldersRow.setCurrentItemFocus(reason)
         else
             coneNButtons.forceActiveFocus(reason)
     }
@@ -98,10 +96,10 @@ Widgets.PageExt {
         property bool _hasMedias: true
 
         Binding on _hasMedias {
-            when: !continueWatchingRow.model.loading && !favoritesRow.model.loading
-                  && !newVideoRow.model.loading && !newMusicRow.model.loading
-            value: continueWatchingRow.visible || favoritesRow.visible
-                   || newVideoRow.visible || newMusicRow.visible
+            when: !continueWatchingRow.model.loading && !listenAgainRow.model.loading
+                  && !foldersRow.model.loading
+            value: continueWatchingRow.visible || listenAgainRow.visible
+                   || foldersRow.visible
             restoreMode: Binding.RestoreNone
         }
 
@@ -163,7 +161,7 @@ Widgets.PageExt {
             anchors.centerIn: flickable._hasMedias ? undefined : parent
             anchors.top: flickable._hasMedias ? parent.top : undefined
             anchors.left: flickable._hasMedias ? parent.left : undefined
-            anchors.leftMargin: flickable._hasMedias ? newVideoRow.contentLeftMargin : 0
+            anchors.leftMargin: flickable._hasMedias ? foldersRow.contentLeftMargin : 0
 
             Navigation.parentItem: root
             Navigation.upItem: root.header
@@ -269,20 +267,20 @@ Widgets.PageExt {
             }
 
             Widgets.ViewHeader {
-                visible: favoritesRow.visible
-                text: qsTr("Favorites")
-                view: favoritesRow
-                seeAllButton.visible: favoritesRow.model.maximumCount > favoritesRow.model.count
+                visible: listenAgainRow.visible
+                text: qsTr("Listen Again")
+                view: listenAgainRow
+                seeAllButton.visible: listenAgainRow.model.maximumCount > listenAgainRow.model.count
 
                 onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("favorites", reason)
+                    root.seeAllButtonClicked("listenAgain", reason)
                 }
             }
 
             MediaView {
-                id: favoritesRow
+                id: listenAgainRow
 
-                AccessibleCompat.id: "favourites"
+                AccessibleCompat.id: "listenAgain"
 
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -310,17 +308,15 @@ Widgets.PageExt {
 
                 Navigation.parentItem: mediaRows
 
-                model: MLMediaModel {
-                    favoriteOnly: true
-
+                model: MLRecentAudioModel {
                     ml: MediaLib
 
-                    sortCriteria: root.sort.criteria || "insertion"
+                    sortCriteria: root.sort.criteria
                     sortOrder: root.sort.order
                     searchPattern: root.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(favoritesRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+                    limit: MainCtx.gridView ? Math.max(listenAgainRow.currentItem?.nbItemPerRow ?? null, 1) : 5
                 }
 
                 onActiveFocusChanged: {
@@ -345,20 +341,16 @@ Widgets.PageExt {
             }
 
             Widgets.ViewHeader {
-                text: qsTr("New Videos")
-                visible: newVideoRow.visible
-                view: newVideoRow
-                seeAllButton.visible: newVideoRow.model.maximumCount > newVideoRow.model.count
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("newVideo", reason)
-                }
+                visible: foldersRow.visible
+                text: qsTr("Frequently Visited Folders")
+                view: foldersRow
+                seeAllButton.visible: false
             }
 
             VideoAll {
-                id: newVideoRow
+                id: foldersRow
 
-                AccessibleCompat.id: "newVideo"
+                AccessibleCompat.id: "folders"
 
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -386,21 +378,34 @@ Widgets.PageExt {
 
                 Navigation.parentItem: mediaRows
 
-                model: MLVideoModel {
+                model: MLVideoFoldersModel {
                     ml: MediaLib
 
-                    sortCriteria: root.sort.criteria || "insertion"
+                    sortCriteria: root.sort.criteria
                     sortOrder: root.sort.order
                     searchPattern: root.search.pattern
 
                     // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(newVideoRow.currentItem?.nbItemPerRow ?? null, 1) : 5
+                    limit: MainCtx.gridView ? Math.max(foldersRow.currentItem?.nbItemPerRow ?? null, 1) : 5
                 }
 
                 contextMenu: MLContextMenu {
-                    model: newVideoRow.model
+                    model: foldersRow.model
+                }
 
-                    showPlayAsAudioAction: true
+                gridLabels: function (model) {
+                    if (!model)
+                        return ""
+                    return [ qsTr("%1 Videos").arg(model.count < 100 ? model.count : "99+") ]
+                }
+
+                // Opens the videos page, where the folders are listed.
+                function onAction(indexes) {
+                    History.push(["mc", "video"], Qt.TabFocusReason)
+                }
+
+                function onDoubleClick(object) {
+                    History.push(["mc", "video"], Qt.MouseFocusReason)
                 }
 
                 onActiveFocusChanged: {
@@ -424,79 +429,6 @@ Widgets.PageExt {
                 }
             }
 
-            Widgets.ViewHeader {
-                text: qsTr("New Music")
-                visible: newMusicRow.visible
-                view: newMusicRow
-                seeAllButton.visible: newMusicRow.model.maximumCount > newMusicRow.model.count
-
-                onSeeAllButtonClicked: function (reason) {
-                    root.seeAllButtonClicked("newMusic", reason)
-                }
-            }
-
-            MediaView {
-                id: newMusicRow
-
-                AccessibleCompat.id: "newMusic"
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                height: currentItem?.contentHeight ?? implicitHeight
-
-                visible: model.count !== 0
-
-                listHeaderPositioning: ListView.InlineHeader
-                enableBeginningFade: false
-                enableEndFade: false
-                listSectionProperty: ""
-
-                interactive: false
-
-                emptyLabel: null
-
-                // FIXME: `ExpandGridView` causes extreme performance degradation when `reuseItems`
-                //        is true and items provided by the model change (#29084).
-                reuseItems: !MainCtx.gridView
-
-                listCoverWidth: root.listCoverWidth
-                listCoverHeight: root.listCoverHeight
-                listCoverRadius: root.listCoverRadius
-
-                Navigation.parentItem: mediaRows
-
-                model: MLAudioModel {
-                    ml: MediaLib
-
-                    sortCriteria: root.sort.criteria || "insertion"
-                    sortOrder: root.sort.order
-                    searchPattern: root.search.pattern
-
-                    // FIXME: Make limit 0 load no items, instead of loading all items.
-                    limit: MainCtx.gridView ? Math.max(newMusicRow.currentItem?.nbItemPerRow ?? null, 1) : 5
-                }
-
-                onActiveFocusChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        contentYBehavior.enabled = true
-                        Helpers.positionFlickableToContainItem(flickable, item ?? this)
-                        contentYBehavior.enabled = false
-                    }
-                }
-
-                onCurrentIndexChanged: {
-                    if (activeFocus) {
-                        const item = currentItem?.currentItem ?? currentItem?._getItem(currentIndex) // FIXME: `ExpandGridView` does not have `currentItem`.
-                        if (item) {
-                            contentYBehavior.enabled = true
-                            Helpers.positionFlickableToContainItem(flickable, item)
-                            contentYBehavior.enabled = false
-                        }
-                    }
-                }
-            }
         }
     }
 }

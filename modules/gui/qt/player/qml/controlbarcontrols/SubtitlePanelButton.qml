@@ -24,8 +24,8 @@ import VLC.Player
 import VLC.Util
 
 // Opens the player settings panel on the Subtitles tab.
-Widgets.IconToolButton {
-    text: VLCIcons.audiosub
+Widgets.SvgToolButton {
+    iconName: "subtitles"
     description: qsTr("Subtitle settings")
 
     checked: PlayerPanelState.settingsVisible
