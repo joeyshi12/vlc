@@ -732,7 +732,9 @@ void SystemPalette::makeDarkPalette()
     //window banner & miniplayer
     {
         C::ColorSet CS = C::Window;
-        setColor(CS, C::Bg, C::Primary, C::Normal, Qt::black); //FIXME
+        // Background of the top bar, control bar and miniplayer, "Dark/BG/A4"
+        // in the design. The seek bar and volume boxes are black on it.
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#191919"));
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black);
         setColor(CS, C::Decoration, C::Border, C::Normal, darkGrey800); //FIXME not a predef
     }
@@ -851,10 +853,15 @@ void SystemPalette::makeDarkPalette()
         setColor(CS, C::Bg, C::Primary, C::Focused, setColorAlpha("#929292", 0.4));
         setColor(CS, C::Bg, C::Primary, C::Hovered, setColorAlpha("#929292", 0.4));
 
-        // Track and played part of the box-style seek bar and volume slider
-        setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black);
+        // Track and played part of the box-style seek bar and volume slider.
+        // The track is "Dark/BG/B2" of the design and the played part is the
+        // accent colour at 26 % of its brightness, so both stand out from the
+        // control bar behind them.
+        setColor(CS, C::Bg, C::Secondary, C::Normal, QColor("#090909"));
         setColor(CS, C::Fg, C::Primary, C::Normal, orange500);
-        setColor(CS, C::Fg, C::Secondary, C::Normal, setColorAlpha(orange500, 0.26));
+        setColor(CS, C::Fg, C::Secondary, C::Normal, QColor::fromRgbF(orange500.redF() * 0.26,
+                                                                      orange500.greenF() * 0.26,
+                                                                      orange500.blueF() * 0.26));
         setColor(CS, C::Fg, C::Positive, C::Normal, "#0F7B0F");  //FIXME
         setColor(CS, C::Fg, C::Neutral, C::Normal, "#9D5D00");  //FIXME
         setColor(CS, C::Fg, C::Negative, C::Normal, "#C42B1C");  //FIXME
