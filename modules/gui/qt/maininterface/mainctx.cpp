@@ -317,6 +317,7 @@ MainCtx::~MainCtx()
     {
         settings->beginGroup("MainWindow");
         settings->setValue( "ShowRemainingTime", m_showRemainingTime );
+        settings->setValue( "SeekBarSubtitleTimeline", m_seekBarSubtitleTimeline );
         settings->setValue( "interface-scale", QString::number( m_intfUserScaleFactor ) );
 
         /* Save playlist state */
@@ -489,6 +490,7 @@ void MainCtx::loadFromSettingsImpl(const bool callSignals)
     loadFromSettings(m_grouping, "MainWindow/grouping", GROUPING_NONE, this, &MainCtx::groupingChanged);
 
     loadFromSettings(m_showRemainingTime, "MainWindow/ShowRemainingTime", false, this, &MainCtx::showRemainingTimeChanged);
+    loadFromSettings(m_seekBarSubtitleTimeline, "MainWindow/SeekBarSubtitleTimeline", false, this, &MainCtx::seekBarSubtitleTimelineChanged);
 
     loadFromSettings(m_albumSections, "MainWindow/album-sections", true, this, &MainCtx::albumSectionsChanged);
 
@@ -722,6 +724,14 @@ void MainCtx::setShowRemainingTime( bool show )
 {
     m_showRemainingTime = show;
     emit showRemainingTimeChanged(show);
+}
+
+void MainCtx::setSeekBarSubtitleTimeline( bool show )
+{
+    if (m_seekBarSubtitleTimeline == show)
+        return;
+    m_seekBarSubtitleTimeline = show;
+    emit seekBarSubtitleTimelineChanged(show);
 }
 
 void MainCtx::setGridView(bool asGrid)

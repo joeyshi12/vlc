@@ -53,6 +53,16 @@ PanelCard {
     PanelWidgets.Page {
         PanelWidgets.LabeledRow {
             Layout.topMargin: VLCStyle.margin_xsmall
+            text: qsTr("Show Subtitle Timeline on Seekbar")
+
+            PanelWidgets.Switch {
+                checked: MainCtx.seekBarSubtitleTimeline
+                onToggled: MainCtx.seekBarSubtitleTimeline = checked
+                Accessible.name: qsTr("Show subtitle timeline on seek bar")
+            }
+        }
+
+        PanelWidgets.LabeledRow {
             text: qsTr("Reverse")
 
             PanelWidgets.Switch {
@@ -328,6 +338,16 @@ PanelCard {
                 onDecrease: Player.subtitleDelayMS -= 50
                 onIncrease: Player.subtitleDelayMS += 50
                 onReset: Player.subtitleDelayMS = 0
+            }
+        }
+
+        PanelWidgets.LabeledRow {
+            text: qsTr("Show Subtitle Timeline on Seekbar")
+
+            PanelWidgets.Switch {
+                checked: MainCtx.seekBarSubtitleTimeline
+                onToggled: MainCtx.seekBarSubtitleTimeline = checked
+                Accessible.name: qsTr("Show subtitle timeline on seek bar")
             }
         }
 

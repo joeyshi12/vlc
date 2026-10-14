@@ -47,7 +47,21 @@ T.ProgressBar {
     // played part, instead of a thin line with a round handle.
     property bool blockStyle: false
     readonly property real _blockInset: VLCStyle.dp(2, VLCStyle.scale)
-    readonly property real _blockHandleWidth: VLCStyle.dp(8, VLCStyle.scale)
+    readonly property real _blockHandleWidth: VLCStyle.dp(waveform.length > 0 ? 4 : 8, VLCStyle.scale)
+
+    // Box style only: audio level from 0 to 1 for equal parts of the media,
+    // drawn as bars instead of the played part. A value of -1 is not known yet.
+    property var waveform: []
+
+    // Box style only: subtitle lines as { start, end } positions from 0 to 1,
+    // drawn as light blocks over the bar.
+    property var subtitleCues: []
+
+    // Colour of the waveform bars after the current position.
+    readonly property color _waveformRestColor: (theme.palette?.isDark ?? true) ? Qt.rgba(1, 1, 1, 0.13)
+                                                                                 : Qt.rgba(0, 0, 0, 0.2)
+    readonly property real waveformBarWidth: VLCStyle.dp(2, VLCStyle.scale)
+    readonly property real waveformBarSpacing: VLCStyle.dp(5, VLCStyle.scale)
     property real touchHandlerMargin: VLCStyle.touchHandlerMargin
 
     Keys.onRightPressed: Player.jumpFwd()
@@ -468,6 +482,9 @@ T.ProgressBar {
             Rectangle {
                 id: blockProgress
 
+                // With a waveform, only the handle at the end is drawn.
+                opacity: control.waveform.length > 0 ? 0 : 1
+
                 x: control._blockInset
                 y: control._blockInset
                 height: parent.height - 2 * control._blockInset
@@ -486,6 +503,53 @@ T.ProgressBar {
                                                                                   : Item.StaticMutabilityGroup
                 }
 
+            }
+
+            Item {
+                id: waveformBars
+
+                anchors.fill: parent
+                anchors.margins: control._blockInset
+                visible: control.waveform.length > 0
+
+                Repeater {
+                    model: control.waveform.length
+
+                    Rectangle {
+                        required property int index
+
+                        readonly property real level: control.waveform[index] ?? -1
+
+                        x: VLCStyle.dp(4, VLCStyle.scale) + index * control.waveformBarSpacing
+                        width: control.waveformBarWidth
+                        height: Math.max(VLCStyle.dp(2, VLCStyle.scale),
+                                         (level < 0 ? 0 : level) * waveformBars.height * 0.6)
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: width / 2
+
+                        color: ((x + width / 2) / waveformBars.width <= control.visualPosition)
+                               ? theme.fg.primary
+                               : control._waveformRestColor
+                        opacity: level < 0 ? 0.5 : 1
+                    }
+                }
+            }
+
+            Repeater {
+                model: control.blockStyle ? control.subtitleCues : null
+
+                Rectangle {
+                    required property var modelData
+
+                    readonly property real usableWidth: blockTrack.width - 2 * control._blockInset
+
+                    x: control._blockInset + modelData.start * usableWidth
+                    y: control._blockInset
+                    width: Math.max(VLCStyle.dp(1, VLCStyle.scale), (modelData.end - modelData.start) * usableWidth)
+                    height: blockTrack.height - 2 * control._blockInset
+                    radius: VLCStyle.dp(1, VLCStyle.scale)
+                    color: theme.palette?.isDark ?? true ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(0, 0, 0, 0.12)
+                }
             }
 
             // Chapter starts are drawn as thin gaps across the bar.

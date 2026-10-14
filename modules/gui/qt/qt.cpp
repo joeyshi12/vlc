@@ -137,6 +137,9 @@ static int  OpenIntf     ( vlc_object_t * );
 static int  OpenDialogs  ( vlc_object_t * );
 static void Close        ( vlc_object_t * );
 static int  WindowOpen   ( vlc_window_t * );
+
+/* Stream output that collects seek bar data, see player/media_timeline.cpp */
+int MediaTimelineStreamOpen( vlc_object_t * );
 static void ShowDialog   ( intf_thread_t *, int, int, intf_dialog_args_t * );
 
 
@@ -509,6 +512,14 @@ vlc_module_begin ()
         set_capability( "qtcsdmenu", 10 )
         set_callback( QtWin32CSDMenuOpen )
 #endif
+#ifdef ENABLE_SOUT
+    add_submodule ()
+        set_description( "Qt seek bar timeline reader" )
+        set_capability( "sout output", 0 )
+        add_shortcut( "qt_media_timeline" )
+        set_callback( MediaTimelineStreamOpen )
+#endif
+
     add_submodule()
         set_capability("qt theme provider", 1)
         set_description( "Qt basic system theme" )
