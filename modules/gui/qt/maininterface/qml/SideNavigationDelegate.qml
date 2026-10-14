@@ -35,14 +35,12 @@ T.ItemDelegate {
     property string iconTxt: ""
 
     // Name of an SVG icon of the design (pixmaps/redesign/nav-<name>.svg). It
-    // is used instead of `iconTxt` when it is set. The icon variant that is
-    // drawn filled is used for `iconSelected`.
+    // is used instead of `iconTxt` when it is set.
     property string iconName: ""
-    property bool iconSelected: false
 
-    // Colour of the panel behind the icon, for the parts of the filled icon
-    // that are cut out.
-    property color panelColor: "#191919"
+    // Whether the entry is the current page, which is shown with the accent
+    // colour.
+    property bool current: false
 
     property bool showText: true
 
@@ -139,7 +137,7 @@ T.ItemDelegate {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
 
-                color: theme.fg.primary
+                color: control.current ? theme.accent : theme.fg.primary
 
                 font.pixelSize: VLCStyle.icon_normal
             }
@@ -159,18 +157,15 @@ T.ItemDelegate {
 
                 // SVG colours can not be transparent, so the transparency of
                 // the colour is applied to the image.
-                opacity: theme.fg.primary.a
+                opacity: control.current ? 1.0 : theme.fg.primary.a
 
-                readonly property color _color: Qt.rgba(theme.fg.primary.r, theme.fg.primary.g, theme.fg.primary.b, 1.0)
+                readonly property color _source: control.current ? theme.accent : theme.fg.primary
+                readonly property color _color: Qt.rgba(_source.r, _source.g, _source.b, 1.0)
 
-                source: {
-                    if (control.iconName === "")
-                        return ""
-                    const builder = SVGColorImage.colorize("qrc:///redesign/nav-" + control.iconName
-                                                           + (control.iconSelected ? "-selected" : "") + ".svg")
-                    return (control.iconSelected ? builder.any({ "#D37918": _color, "#8F8F8F": control.panelColor })
-                                                 : builder.any({ "#8F8F8F": _color })).uri()
-                }
+                source: control.iconName === "" ? ""
+                                                : SVGColorImage.colorize("qrc:///redesign/nav-" + control.iconName + ".svg")
+                                                               .any({ "#8F8F8F": _color })
+                                                               .uri()
 
                 Accessible.ignored: true
             }

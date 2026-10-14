@@ -75,13 +75,9 @@
         <file alias="replay.svg">pixmaps/redesign/replay.svg</file>
         <file alias="queue.svg">pixmaps/redesign/queue.svg</file>
         <file alias="nav-home.svg">pixmaps/redesign/nav-home.svg</file>
-        <file alias="nav-home-selected.svg">pixmaps/redesign/nav-home-selected.svg</file>
         <file alias="nav-videos.svg">pixmaps/redesign/nav-videos.svg</file>
-        <file alias="nav-videos-selected.svg">pixmaps/redesign/nav-videos-selected.svg</file>
         <file alias="nav-songs.svg">pixmaps/redesign/nav-songs.svg</file>
-        <file alias="nav-songs-selected.svg">pixmaps/redesign/nav-songs-selected.svg</file>
         <file alias="nav-streaming.svg">pixmaps/redesign/nav-streaming.svg</file>
-        <file alias="nav-streaming-selected.svg">pixmaps/redesign/nav-streaming-selected.svg</file>
         <file alias="nav-playlist.svg">pixmaps/redesign/nav-playlist.svg</file>
         <file alias="nav-recent.svg">pixmaps/redesign/nav-recent.svg</file>
         <file alias="nav-add.svg">pixmaps/redesign/nav-add.svg</file>

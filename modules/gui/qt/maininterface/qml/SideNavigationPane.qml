@@ -185,9 +185,8 @@ T.Pane {
 
                     leftPadding: root.safeAreaLeftMargin + VLCStyle.dp(16, VLCStyle.scale)
 
-                    panelColor: theme.bg.primary
                     iconName: (depth === 0 && uri && uri.length > 0) ? (root.iconNames[uri[0]] ?? "") : ""
-                    iconSelected: highlighted && depth === 0
+                    current: highlighted && depth === 0
                     rightPadding: root.safeAreaRightMargin
 
                     leftInset: root.safeAreaLeftMargin + implicitLeftInset
