@@ -70,7 +70,10 @@ QtObject {
         { id: ControlListModel.ARTWORK_INFO, file: "ArtworkInfoWidget.qml", label: VLCIcons.info, text: qsTr("Artwork Info") },
         { id: ControlListModel.PLAYBACK_SPEED_BUTTON, file: "PlaybackSpeedButton.qml", label: "1x", text: qsTr("Playback Speed") },
         { id: ControlListModel.HIGH_RESOLUTION_TIME_WIDGET, file: "HighResolutionTimeWidget.qml", label: VLCIcons.time, text: qsTr("High Resolution Time") },
-        { id: ControlListModel.TIMELINE_WIDGET, file: "TimelineWidget.qml", label: VLCIcons.time, text: qsTr("Timeline") }
+        { id: ControlListModel.TIMELINE_WIDGET, file: "TimelineWidget.qml", label: VLCIcons.time, text: qsTr("Timeline") },
+        { id: ControlListModel.AUDIO_PANEL_BUTTON, file: "AudioPanelButton.qml", label: VLCIcons.topbar_music, text: qsTr("Audio Settings") },
+        { id: ControlListModel.SUBTITLE_PANEL_BUTTON, file: "SubtitlePanelButton.qml", label: VLCIcons.audiosub, text: qsTr("Subtitle Settings") },
+        { id: ControlListModel.PLAYBACK_PANEL_BUTTON, file: "PlaybackPanelButton.qml", label: VLCIcons.effect_filter, text: qsTr("Playback Settings") }
     ]
 
     function control(id) {

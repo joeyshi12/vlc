@@ -494,6 +494,16 @@ void DialogsProvider::mediaCodecDialog()
         m_mediaInfoDialog->hide();
 }
 
+void DialogsProvider::mediaStatisticsDialog()
+{
+    ensureDialog(m_mediaInfoDialog);
+
+    if( !m_mediaInfoDialog->isVisible() || m_mediaInfoDialog->currentTab() != MediaInfoDialog::INPUTSTATS_PANEL )
+        m_mediaInfoDialog->showTab( MediaInfoDialog::INPUTSTATS_PANEL );
+    else
+        m_mediaInfoDialog->hide();
+}
+
 QMessageBox::StandardButton DialogsProvider::messageDialog(const QString &text,
                                                            const QString &title,
                                                            const QMessageBox::StandardButtons buttons,

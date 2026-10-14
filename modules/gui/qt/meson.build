@@ -687,6 +687,7 @@ qml_modules += {
         'medialibrary/qml/MusicAlbumSectionDelegate.qml',
         'medialibrary/qml/MLGlobalShortcuts.qml',
         'medialibrary/qml/Bookmarks.qml',
+        'medialibrary/qml/BookmarksPanelPage.qml',
         'medialibrary/qml/MLContextMenu.qml',
         'medialibrary/qml/MLDragItem.qml',
         'medialibrary/qml/MLTableColumns.qml',
@@ -754,9 +755,14 @@ qml_modules += {
        'player/qml/ControlLayout.qml',
        'player/qml/ControlRepeater.qml',
        'player/qml/NavigationBox.qml',
+       'player/qml/PanelCard.qml',
+       'player/qml/PanelWidgets.qml',
+       'player/qml/PlayerListsPanel.qml',
+       'player/qml/PlayerSettingsPanel.qml',
    ),
    'singletons' : files(
        'player/qml/PlayerControlbarControls.qml',
+       'player/qml/PlayerPanelState.qml',
    )
 }
 
@@ -809,6 +815,9 @@ qml_modules += {
        'player/qml/controlbarcontrols/TeletextColorButton.qml',
        'player/qml/controlbarcontrols/TeletextWidget.qml',
        'player/qml/controlbarcontrols/TimelineWidget.qml',
+       'player/qml/controlbarcontrols/AudioPanelButton.qml',
+       'player/qml/controlbarcontrols/SubtitlePanelButton.qml',
+       'player/qml/controlbarcontrols/PlaybackPanelButton.qml',
        'player/qml/controlbarcontrols/VolumeWidget.qml',
        'player/qml/controlbarcontrols/Fallback.qml',
    ),
