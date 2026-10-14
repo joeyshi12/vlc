@@ -132,7 +132,7 @@ FocusScope {
                 Layout.minimumWidth: (containsVisibleItem(leftRepeater) && containsVisibleItem(rightRepeater)) ? playerControlLayout.layoutSpacing
                                                                                                                : 0
 
-                Layout.fillWidth: true
+                Layout.fillWidth: !leftRepeater.containsExpandingItem() && !rightRepeater.containsExpandingItem()
                 visible: true
             }
 

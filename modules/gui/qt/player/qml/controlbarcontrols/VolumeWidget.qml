@@ -97,8 +97,8 @@ T.Pane {
         Widgets.SliderExt {
             id: volControl
 
-            // FIXME: use VLCStyle
-            implicitWidth: VLCStyle.dp(100, VLCStyle.scale)
+            implicitWidth: VLCStyle.dp(88, VLCStyle.scale)
+            implicitHeight: VLCStyle.dp(28, VLCStyle.scale)
 
             // WARNING: Directly setting the insets break handle and background positioning.
             Binding on topInset {
@@ -110,8 +110,41 @@ T.Pane {
                 value: VLCStyle.touchHandlerMargin
             }
 
-            Layout.fillHeight: true
-            Layout.margins: VLCStyle.margin_xsmall
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: VLCStyle.margin_xsmall
+
+            // The volume is drawn as a box that fills from the left.
+            handle: Item {
+                x: volControl.leftPadding + volControl.visualPosition * volControl.availableWidth
+                y: volControl.topPadding
+                implicitWidth: 0
+                implicitHeight: volControl.availableHeight
+            }
+
+            background: Rectangle {
+                x: volControl.leftPadding
+                y: volControl.topPadding
+
+                implicitWidth: volControl.implicitWidth
+                implicitHeight: volControl.implicitHeight
+
+                width: volControl.availableWidth
+                height: volControl.availableHeight
+
+                radius: VLCStyle.dp(3, VLCStyle.scale)
+                color: volControl.colorContext.bg.secondary
+
+                border.width: volControl.visualFocus ? VLCStyle.focus_border : 0
+                border.color: volControl.colorContext.visualFocus
+
+                Rectangle {
+                    width: volControl.visualPosition * parent.width
+                    height: parent.height
+
+                    radius: parent.radius
+                    color: Qt.alpha(volumeBtn.colorContext.fg.primary, volControl.hovered ? 0.4 : 0.25)
+                }
+            }
 
             property bool _inhibitPlayerVolumeUpdate: false
 

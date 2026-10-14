@@ -546,6 +546,7 @@ void SystemPalette::makeLightPalette()
     {
         C::ColorSet CS = C::ToolButton;
         setColor(CS, C::Bg, C::Primary, C::Normal, Qt::transparent);
+        setColor(CS, C::Bg, C::Primary, C::Hovered, setColorAlpha(Qt::black, 0.06));
         setColor(CS, C::Bg, C::Secondary, C::Normal, lightGrey400);
 
         setColor(CS, C::Fg, C::Primary, C::Normal, setColorAlpha(Qt::black, 0.6));
@@ -632,8 +633,10 @@ void SystemPalette::makeLightPalette()
     {
         C::ColorSet CS = C::Slider;
         setColor(CS, C::Bg, C::Primary, C::Normal, lightGrey400); //#EEEEEE on the designs
-        setColor(CS, C::Bg, C::Secondary, C::Normal, setColorAlpha("#lightGrey400", 0.2));
+        // Track and played part of the box-style seek bar and volume slider
+        setColor(CS, C::Bg, C::Secondary, C::Normal, setColorAlpha(Qt::black, 0.08));
         setColor(CS, C::Fg, C::Primary, C::Normal, orange800);
+        setColor(CS, C::Fg, C::Secondary, C::Normal, setColorAlpha(orange800, 0.3));
         setColor(CS, C::Fg, C::Positive, C::Normal, "#0F7B0F");  //FIXME
         setColor(CS, C::Fg, C::Neutral, C::Normal, "#9D5D00");  //FIXME
         setColor(CS, C::Fg, C::Negative, C::Normal, "#C42B1C");  //FIXME
@@ -759,6 +762,7 @@ void SystemPalette::makeDarkPalette()
     {
         C::ColorSet CS = C::ToolButton;
         setColor(CS, C::Bg, C::Primary, C::Normal, Qt::transparent);
+        setColor(CS, C::Bg, C::Primary, C::Hovered, setColorAlpha(Qt::white, 0.06));
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black);
 
         setColor(CS, C::Fg, C::Primary, C::Normal, setColorAlpha(Qt::white, 0.6));
@@ -847,7 +851,10 @@ void SystemPalette::makeDarkPalette()
         setColor(CS, C::Bg, C::Primary, C::Focused, setColorAlpha("#929292", 0.4));
         setColor(CS, C::Bg, C::Primary, C::Hovered, setColorAlpha("#929292", 0.4));
 
+        // Track and played part of the box-style seek bar and volume slider
+        setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black);
         setColor(CS, C::Fg, C::Primary, C::Normal, orange500);
+        setColor(CS, C::Fg, C::Secondary, C::Normal, setColorAlpha(orange500, 0.26));
         setColor(CS, C::Fg, C::Positive, C::Normal, "#0F7B0F");  //FIXME
         setColor(CS, C::Fg, C::Neutral, C::Normal, "#9D5D00");  //FIXME
         setColor(CS, C::Fg, C::Negative, C::Normal, "#C42B1C");  //FIXME

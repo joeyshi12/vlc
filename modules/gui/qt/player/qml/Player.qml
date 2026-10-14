@@ -1294,7 +1294,8 @@ FocusScope {
 
         rightPadding: VLCStyle.applicationHorizontalMargin
         leftPadding: VLCStyle.applicationHorizontalMargin
-        bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_xsmall
+        bottomPadding: VLCStyle.applicationVerticalMargin
+                       + (inlineTimeline ? VLCStyle.dp(11, VLCStyle.scale) : VLCStyle.margin_xsmall)
 
         textPosition: (MainCtx.pinVideoControls)
                       ? ControlBar.TimeTextPosition.LeftRightSlider
@@ -1336,10 +1337,14 @@ FocusScope {
         background: Rectangle {
             id: controlBarBackground
 
-            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls || !rootPlayer.displayFadeRectangles
+            // The single row control bar always has a background, also over the video.
+            visible: controlBar.inlineTimeline || !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls
+                     || !rootPlayer.displayFadeRectangles
 
             opacity: {
-                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
+                if (controlBar.inlineTimeline && MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls) {
+                    return 0.93
+                } else if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
                     return 0.6
                 } else if ((Window.visibility === Window.FullScreen) && MainCtx.hasEmbededVideo) {
                     return MainCtx.pinOpacity
@@ -1351,6 +1356,16 @@ FocusScope {
             }
 
             color: windowTheme.bg.primary
+
+            Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+
+                visible: controlBar.inlineTimeline
+                height: VLCStyle.border
+                color: windowTheme.border
+            }
         }
 
         FadeControllerStateGroup {

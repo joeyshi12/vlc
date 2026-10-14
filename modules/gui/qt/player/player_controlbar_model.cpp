@@ -130,6 +130,16 @@ ControlListModel *PlayerControlbarModel::right() const
     return m_right;
 }
 
+bool PlayerControlbarModel::contains(int controlType) const
+{
+    for (const ControlListModel *list : { m_left, m_center, m_right })
+    {
+        if (list && list->getControls().contains(controlType))
+            return true;
+    }
+    return false;
+}
+
 bool PlayerControlbarModel::operator==(const PlayerControlbarModel &model) const
 {
     assert(m_left && model.m_left);

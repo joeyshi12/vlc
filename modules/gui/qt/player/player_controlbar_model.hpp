@@ -80,6 +80,9 @@ public:
     ControlListModel* center() const;
     ControlListModel* right() const;
 
+    // Whether the control appears in any of the left, center or right lists.
+    Q_INVOKABLE bool contains(int controlType) const;
+
     bool operator==(const PlayerControlbarModel& model) const;
     bool operator!=(const PlayerControlbarModel& model) const {
         return !(operator==(model));
