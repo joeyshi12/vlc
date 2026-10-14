@@ -461,6 +461,10 @@ bool CompositorX11UISurface::resizeFbo()
         const bool current = m_context->makeCurrent(this);
         if (!current)
             return false;
+        // Detach the render target before deleting the texture: the driver may
+        // reuse the same texture name, and an equal render target would be
+        // ignored by setRenderTarget() in createFbo().
+        m_uiWindow->setRenderTarget(QQuickRenderTarget());
         destroyFbo();
         createFbo();
         m_context->doneCurrent();
