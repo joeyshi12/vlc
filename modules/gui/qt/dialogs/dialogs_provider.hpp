@@ -209,6 +209,7 @@ public slots:
     void mediaInfoDialog( const PlaylistItem& pItem );
     void mediaInfoDialog( const MLItemId& itemId );
     void mediaCodecDialog();
+    void mediaStatisticsDialog();
     bool questionDialog(const QString& text, const QString& title = {}) const;
     QMessageBox::StandardButton messageDialog(const QString& text,
                                               const QString& title = {},

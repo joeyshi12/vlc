@@ -302,6 +302,11 @@ void MLBookmarkModel::remove( const QModelIndexList &indexes )
     });
 }
 
+void MLBookmarkModel::removeAt( int row )
+{
+    remove( { index( row, 0 ) } );
+}
+
 void MLBookmarkModel::clear()
 {
     if (m_currentMediaId == 0)

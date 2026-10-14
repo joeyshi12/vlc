@@ -1115,6 +1115,7 @@ libqml_module_medialibrary_a_QML = \
 	medialibrary/qml/MusicAlbumSectionDelegate.qml \
 	medialibrary/qml/MLGlobalShortcuts.qml \
 	medialibrary/qml/Bookmarks.qml \
+	medialibrary/qml/BookmarksPanelPage.qml \
 	medialibrary/qml/MLContextMenu.qml \
 	medialibrary/qml/MLDragItem.qml \
 	medialibrary/qml/MLTableColumns.qml \
@@ -1187,10 +1188,15 @@ libqml_module_player_a_QML = \
 	player/qml/TracksListPage.qml \
 	player/qml/ControlLayout.qml \
 	player/qml/ControlRepeater.qml \
-	player/qml/NavigationBox.qml
+	player/qml/NavigationBox.qml \
+	player/qml/PanelCard.qml \
+	player/qml/PanelWidgets.qml \
+	player/qml/PlayerListsPanel.qml \
+	player/qml/PlayerSettingsPanel.qml
 
 libqml_module_player_a_Singleton_QML = \
-	player/qml/PlayerControlbarControls.qml
+	player/qml/PlayerControlbarControls.qml \
+	player/qml/PlayerPanelState.qml
 libqml_module_player_a_SOURCES = $(QML_MODULE_player_SRC)
 nodist_libqml_module_player_a_SOURCES = player/qmlassets.cpp $(QML_MODULE_player_NODIST_EXTRA)
 QML_MODULE_LIBS += libqml_module_player.a
@@ -1244,6 +1250,9 @@ libqml_module_playercontrols_a_QML = \
 	player/qml/controlbarcontrols/TeletextColorButton.qml \
 	player/qml/controlbarcontrols/TeletextWidget.qml \
 	player/qml/controlbarcontrols/TimelineWidget.qml \
+	player/qml/controlbarcontrols/AudioPanelButton.qml \
+	player/qml/controlbarcontrols/SubtitlePanelButton.qml \
+	player/qml/controlbarcontrols/PlaybackPanelButton.qml \
 	player/qml/controlbarcontrols/VolumeWidget.qml \
 	player/qml/controlbarcontrols/Fallback.qml
 libqml_module_playercontrols_a_Singleton_QML =

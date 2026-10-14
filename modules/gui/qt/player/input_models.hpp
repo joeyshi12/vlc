@@ -160,6 +160,7 @@ class ChapterListModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ getCount NOTIFY countChanged FINAL)
+    Q_PROPERTY(int currentIndex READ getCurrent NOTIFY currentChanged FINAL)
 
 public:
     //user role
@@ -182,6 +183,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void setCurrent(int current);
+    inline int getCurrent() const { return m_current; }
 
     void resetTitle(const vlc_player_title* newTitle);
 
@@ -193,6 +195,7 @@ public:
 
 signals:
     void countChanged();
+    void currentChanged();
 
 public slots:
     QString getNameAtPosition(float pos) const;
