@@ -1,0 +1,136 @@
+# Build VLC with the Qt interface for Linux, Windows and macOS, and keep the
+# results as workflow artifacts.
+#
+# Windows and macOS use the build scripts of the VideoLAN CI
+# (extras/package/*/build.sh) with the prebuilt third-party libraries
+# ("contribs") that the VideoLAN CI publishes, so the libraries are not built
+# here. Linux uses the libraries of the Debian image used by the VideoLAN CI.
+
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux (x86_64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    container:
+      image: registry.videolan.org/vlc-debian-unstable:20260611225331
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: meson setup build -Dqt=enabled --prefix=/usr --buildtype=release
+
+      - name: Build
+        run: ninja -C build
+
+      - name: Install into a folder
+        run: |
+          DESTDIR="$PWD/vlc-linux" meson install -C build --quiet
+          tar -C vlc-linux -czf vlc-linux-x86_64.tar.gz .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vlc-linux-x86_64
+          path: vlc-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  windows:
+    name: Windows (x86_64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h /
+
+      # The full history is needed to find the prebuilt contribs.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Find prebuilt contribs
+        run: |
+          url=$(sh .github/scripts/find-prebuilt-contribs.sh win64 x86_64-w64-mingw32 win32)
+          echo "Using $url"
+          echo "VLC_PREBUILT_CONTRIBS_URL=$url" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          docker run --rm \
+            -v "$PWD:/src" -w /src \
+            -e VLC_PREBUILT_CONTRIBS_URL \
+            registry.videolan.org/vlc-debian-win64-posix:20260611225331 \
+            sh -c 'git config --global --add safe.directory /src && extras/package/win32/build.sh -a x86_64 -p -r'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vlc-windows-x86_64
+          path: |
+            win64/vlc-*-win64.zip
+            win64/vlc-*-win64.exe
+          if-no-files-found: error
+
+  macos:
+    name: macOS (arm64)
+    runs-on: macos-14
+    timeout-minutes: 300
+    env:
+      # Matches the triplet of the contribs published by the VideoLAN CI.
+      VLC_FORCE_KERNELVERSION: 19
+      # The macOS build of VLC does not enable the Qt interface by default.
+      VLC_CONFIGURE_ARGS: --enable-qt
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Install build tools and Qt
+        run: |
+          brew install qt meson ninja
+          # configure looks for qmake6.
+          mkdir -p "$RUNNER_TEMP/bin"
+          ln -sf "$(brew --prefix qt)/bin/qmake" "$RUNNER_TEMP/bin/qmake6"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Find prebuilt contribs
+        run: |
+          url=$(sh .github/scripts/find-prebuilt-contribs.sh macos-arm64 aarch64-apple-darwin19 macosx)
+          echo "Using $url"
+          echo "VLC_PREBUILT_CONTRIBS_URL=$url" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          ../extras/package/macosx/build.sh -a aarch64 -d -j "$(sysctl -n hw.ncpu)"
+
+      - name: Bundle Qt into VLC.app
+        run: sh .github/scripts/bundle-qt-macos.sh "$PWD/build" "$PWD"
+
+      - name: Archive
+        run: ditto -c -k --keepParent build/VLC.app vlc-macos-arm64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vlc-macos-arm64
+          path: vlc-macos-arm64.zip
+          if-no-files-found: error
