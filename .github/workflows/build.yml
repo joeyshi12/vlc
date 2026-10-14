@@ -74,7 +74,9 @@ jobs:
 
       - name: Build
         run: |
+          # Run as the runner user, who owns the checkout.
           docker run --rm \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
             -v "$PWD:/src" -w /src \
             -e VLC_PREBUILT_CONTRIBS_URL \
             registry.videolan.org/vlc-debian-win64-posix:20260611225331 \
@@ -105,10 +107,13 @@ jobs:
 
       - name: Install build tools and Qt
         run: |
-          brew install qt meson ninja
-          # configure looks for qmake6.
+          brew install qt
+          # configure looks for qmake6. The build script replaces PATH and
+          # only keeps the folders listed in VLC_PATH.
           mkdir -p "$RUNNER_TEMP/bin"
           ln -sf "$(brew --prefix qt)/bin/qmake" "$RUNNER_TEMP/bin/qmake6"
+          ln -sf "$(brew --prefix qt)/bin/macdeployqt" "$RUNNER_TEMP/bin/macdeployqt"
+          echo "VLC_PATH=$RUNNER_TEMP/bin" >> "$GITHUB_ENV"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
       - name: Find prebuilt contribs
