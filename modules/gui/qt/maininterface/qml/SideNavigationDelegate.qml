@@ -46,7 +46,7 @@ T.ItemDelegate {
 
     property bool showText: true
 
-    property real radius: VLCStyle.button_radius
+    property real radius: VLCStyle.dp(6, VLCStyle.scale)
 
     // Settings
 
@@ -63,11 +63,14 @@ T.ItemDelegate {
     topInset: implicitTopInset
     bottomInset: implicitBottomInset
 
-    property real implicitLeftInset: VLCStyle.margin_xxsmall
-    property real implicitRightInset: VLCStyle.margin_xxsmall
+    // The button is 40 px high: the 24 px icon with 8 px above and below it,
+    // and 12 px at the sides. The row is 46 px high, which leaves 6 px
+    // between two buttons.
+    property real implicitLeftInset: VLCStyle.dp(8, VLCStyle.scale)
+    property real implicitRightInset: VLCStyle.dp(8, VLCStyle.scale)
 
-    property real implicitTopInset: VLCStyle.dp(7, VLCStyle.scale)
-    property real implicitBottomInset: VLCStyle.dp(7, VLCStyle.scale)
+    property real implicitTopInset: VLCStyle.dp(3, VLCStyle.scale)
+    property real implicitBottomInset: VLCStyle.dp(3, VLCStyle.scale)
 
     // Accessible
 

@@ -180,7 +180,7 @@ T.Pane {
                     width: ListView.view.contentWidth
                     height: preferredHeight
 
-                    // 32 px for the item and 14 px between the items, as in the design
+                    // Same distance between the icons as in the design (46 px)
                     property real preferredHeight: shouldShow ? VLCStyle.dp(46, VLCStyle.scale) : 0.0
 
                     leftPadding: root.safeAreaLeftMargin + VLCStyle.dp(16, VLCStyle.scale)
