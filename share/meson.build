@@ -51,3 +51,16 @@ if host_system != 'windows'
         endforeach
     endforeach
 endif
+
+# Refresh the desktop database and icon cache after "meson install".
+# Meson skips this for DESTDIR installs and when the tools are missing.
+if host_system not in ['windows', 'darwin', 'android']
+    # gnome.post_install() makes gtk-update-icon-cache a hard requirement
+    # unless gtk4-update-icon-cache exists, so only ask for it when present.
+    icon_cache_tool = find_program('gtk4-update-icon-cache',
+                                   'gtk-update-icon-cache', required: false)
+    import('gnome').post_install(
+        gtk_update_icon_cache: icon_cache_tool.found(),
+        update_desktop_database: true,
+    )
+endif
