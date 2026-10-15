@@ -29,7 +29,7 @@ import VLC.Util
 
 // Small player that floats over the library while a video or an audio file is playing: the
 // video with buttons shown on hover, the seek bar, the title, the folder and
-// the artist. The button on the right opens the play queue above the video.
+// the artist. The queue button controls the separate PIPQueue card.
 T.Control {
     id: root
 
@@ -49,6 +49,8 @@ T.Control {
     property bool hideControls: MainCtx.usingTouch // By default controls are hidden with touch
 
     property bool queueVisible: false
+
+    signal queueToggled()
 
     readonly property bool _controlsShown: !root.hideControls &&
                                           (hoverHandler.hovered ||
@@ -119,54 +121,6 @@ T.Control {
         id: content
 
         spacing: 0
-
-        // Play queue
-        ColumnLayout {
-            visible: root.queueVisible
-
-            Layout.fillWidth: true
-            spacing: 0
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: VLCStyle.dp(70, VLCStyle.scale)
-
-                color: theme.bg.secondary
-                radius: VLCStyle.dp(14, VLCStyle.scale)
-
-                // Square bottom corners
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    height: parent.radius
-                    color: parent.color
-                }
-
-                Widgets.ListLabel {
-                    anchors.centerIn: parent
-                    font.weight: Font.Normal
-                    font.pixelSize: VLCStyle.fontSize_xlarge
-                    color: theme.fg.secondary
-                    text: qsTr("Queue")
-                }
-            }
-
-            PlaylistPane {
-                id: queuePane
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: VLCStyle.dp(330, VLCStyle.scale)
-
-                compactHeader: true
-                useAcrylic: false
-                background: null
-                topPadding: 0
-                bottomPadding: VLCStyle.margin_xsmall
-                leftPadding: 0
-                rightPadding: 0
-            }
-        }
 
         // Video
         Item {
@@ -442,7 +396,7 @@ T.Control {
                 checked: root.queueVisible
                 description: qsTr("Play queue")
 
-                onClicked: root.queueVisible = !root.queueVisible
+                onClicked: root.queueToggled()
             }
         }
     }
