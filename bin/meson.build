@@ -6,6 +6,11 @@ if build_vlc and (host_system != 'darwin' or have_osx) and not have_win_store an
 
     vlc_deps = [m_lib, dl_lib, threads_dep]
 
+    vlc_cargs = []
+    if dbus_dep.found()
+        vlc_cargs += '-DHAVE_DBUS'
+    endif
+
     if host_system == 'darwin'
         vlc_sources += ['darwinvlc.m']
         vlc_deps += corefoundation_dep
@@ -46,6 +51,7 @@ if build_vlc and (host_system != 'darwin' or have_osx) and not have_win_store an
         link_args: gc_sections_linkargs,
         include_directories: [vlc_include_dirs],
         dependencies: vlc_deps,
+        c_args: vlc_cargs,
         install: true,
         install_dir: bindir_path,
         win_subsystem: 'windows'
@@ -60,7 +66,7 @@ if build_vlc and (host_system != 'darwin' or have_osx) and not have_win_store an
         link_args: gc_sections_linkargs,
         include_directories: [vlc_include_dirs],
         dependencies: vlc_deps,
-        c_args: [vlc_top_builddir_def, vlc_top_srcdir_def],
+        c_args: vlc_cargs + [vlc_top_builddir_def, vlc_top_srcdir_def],
         objc_args: [vlc_top_builddir_def, vlc_top_srcdir_def],
         win_subsystem: 'windows'
     )

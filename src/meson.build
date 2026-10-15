@@ -46,6 +46,13 @@ libvlccore_deps = [
 vlccore_cargs = [ '-DMODULE_STRING="core"', '-DHAVE_DYNAMIC_PLUGINS' ]
 libvlccore_link_args = []
 
+# D-Bus: one-instance mode and the --started-from-file option
+dbus_dep = dependency('dbus-1', version: '>= 1.6.0', required: get_option('dbus'))
+if dbus_dep.found()
+    vlccore_cargs += '-DHAVE_DBUS'
+    libvlccore_deps += dbus_dep
+endif
+
 if host_system == 'darwin'
     libvlccore_deps += foundation_dep
     libvlccore_deps += corefoundation_dep
