@@ -86,9 +86,18 @@ T.Popup {
         }
     }
 
-    onClosed: saver.save(MainCtx)
+    // Hide the popup first. Saving the complete VLC configuration and
+    // reloading preferences can take long enough to delay the next frame.
+    onClosed: saveTimer.restart()
 
     ConfigOption { id: saver }
+
+    Timer {
+        id: saveTimer
+        interval: VLCStyle.duration_short
+        repeat: false
+        onTriggered: saver.save(MainCtx)
+    }
 
     T.Overlay.modal: Rectangle {
         color: Qt.rgba(0, 0, 0, 0.4)
@@ -234,9 +243,11 @@ T.Popup {
 
                                         readonly property bool current: root.currentCategory === categoryLoader.index
 
+                                        width: categoryLoader.width
                                         implicitHeight: VLCStyle.dp(40, VLCStyle.scale)
                                         padding: VLCStyle.dp(4, VLCStyle.scale)
                                         focusPolicy: Qt.StrongFocus
+                                        hoverEnabled: true
 
                                         onClicked: root.currentCategory = categoryLoader.index
 
@@ -246,8 +257,10 @@ T.Popup {
 
                                         background: Rectangle {
                                             radius: VLCStyle.dp(2, VLCStyle.scale)
-                                            color: item.current ? root.pal.selected
-                                                                : (item.hovered ? Qt.lighter(root.pal.panel, 1.15) : "transparent")
+                                            // The current and hovered categories use the
+                                            // same neutral surface. The accent icon marks
+                                            // the current category.
+                                            color: (item.current || item.hovered) ? root.pal.selected : "transparent"
                                             border.width: item.visualFocus ? VLCStyle.focus_border : 0
                                             border.color: theme.visualFocus
                                         }
