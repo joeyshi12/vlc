@@ -19,6 +19,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Layouts
+import QtQuick.Window
 
 
 import VLC.MainInterface
@@ -33,9 +34,17 @@ T.ItemDelegate {
 
     property string iconTxt: ""
 
+    // Name of an SVG icon of the design (pixmaps/redesign/nav-<name>.svg). It
+    // is used instead of `iconTxt` when it is set.
+    property string iconName: ""
+
+    // Whether the entry is the current page, which is shown with the accent
+    // colour.
+    property bool current: false
+
     property bool showText: true
 
-    property real radius: VLCStyle.button_radius
+    property real radius: VLCStyle.dp(6, VLCStyle.scale)
 
     // Settings
 
@@ -52,11 +61,14 @@ T.ItemDelegate {
     topInset: implicitTopInset
     bottomInset: implicitBottomInset
 
-    property real implicitLeftInset: VLCStyle.margin_xxsmall
-    property real implicitRightInset: VLCStyle.margin_xxsmall
+    // The button is 40 px high: the 24 px icon with 8 px above and below it,
+    // and 12 px at the sides. The row is 46 px high, which leaves 6 px
+    // between two buttons.
+    property real implicitLeftInset: VLCStyle.dp(8, VLCStyle.scale)
+    property real implicitRightInset: VLCStyle.dp(8, VLCStyle.scale)
 
-    property real implicitTopInset: VLCStyle.margin_xxxsmall
-    property real implicitBottomInset: VLCStyle.margin_xxxsmall
+    property real implicitTopInset: VLCStyle.dp(3, VLCStyle.scale)
+    property real implicitBottomInset: VLCStyle.dp(3, VLCStyle.scale)
 
     // Accessible
 
@@ -103,31 +115,20 @@ T.ItemDelegate {
         border.color: visualFocus ? theme.visualFocus : "transparent"
 
         radius: control.radius
-
-        Widgets.CurrentIndicator {
-            anchors {
-                left: parent.left
-                leftMargin: VLCStyle.margin_xxxsmall
-                verticalCenter: parent.verticalCenter
-            }
-            implicitHeight: parent.height / 2
-            visible: control.checked
-
-            radius: control.radius / 2
-        }
     }
 
     contentItem: RowLayout {
-        spacing: VLCStyle.margin_xsmall
+        spacing: VLCStyle.dp(8, VLCStyle.scale)
 
         Item {
-            Layout.preferredWidth: VLCStyle.icon_banner
+            // The icon with 4 px around it, as in the design
+            Layout.preferredWidth: VLCStyle.dp(30, VLCStyle.scale)
             Layout.fillHeight: true
 
             Widgets.IconLabel {
                 id: iconLabel
 
-                visible: text.length > 0
+                visible: control.iconName === "" && text.length > 0
 
                 anchors.centerIn: parent
 
@@ -136,9 +137,37 @@ T.ItemDelegate {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
 
-                color: (control.highlighted || control.checked) ? theme.accent : theme.fg.primary
+                color: control.current ? theme.accent : theme.fg.primary
 
-                font.pixelSize: VLCStyle.icon_banner
+                font.pixelSize: VLCStyle.icon_normal
+            }
+
+            Image {
+                id: svgIcon
+
+                visible: control.iconName !== ""
+
+                anchors.centerIn: parent
+                width: VLCStyle.icon_normal
+                height: VLCStyle.icon_normal
+
+                property real _eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
+
+                sourceSize: Qt.size(width * _eDPR, height * _eDPR)
+
+                // SVG colours can not be transparent, so the transparency of
+                // the colour is applied to the image.
+                opacity: control.current ? 1.0 : theme.fg.primary.a
+
+                readonly property color _source: control.current ? theme.accent : theme.fg.primary
+                readonly property color _color: Qt.rgba(_source.r, _source.g, _source.b, 1.0)
+
+                source: control.iconName === "" ? ""
+                                                : SVGColorImage.colorize("qrc:///redesign/nav-" + control.iconName + ".svg")
+                                                               .any({ "#8F8F8F": _color })
+                                                               .uri()
+
+                Accessible.ignored: true
             }
         }
 
@@ -152,15 +181,15 @@ T.ItemDelegate {
 
             verticalAlignment: Text.AlignVCenter
 
-            color: control.checked ? theme.fg.secondary : theme.fg.primary
+            color: theme.fg.primary
 
             elide: Text.ElideRight
 
             visible: control.showText
 
-            font.pixelSize: VLCStyle.fontSize_normal
+            font.pixelSize: VLCStyle.fontSize_large
 
-            font.weight: control.checked ? Font.DemiBold : Font.Normal
+            font.weight: Font.Normal
 
             //button text is already exposed
             Accessible.ignored: true

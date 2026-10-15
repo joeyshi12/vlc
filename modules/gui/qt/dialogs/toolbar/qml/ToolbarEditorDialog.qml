@@ -36,7 +36,7 @@ WindowDialog {
     minimumHeight: 400
 
     modal: true
-    title: qsTr("Toolbar Editor")
+    title: qsTr("Customize Player")
 
     signal unload()
 
@@ -113,7 +113,7 @@ WindowDialog {
                     implicitWidth: implicitContentWidth
                     font.pixelSize: VLCStyle.fontSize_normal
 
-                    delegate: ItemDelegate {
+                    delegate: T.ItemDelegate {
                         width: comboBox.width
                         leftPadding: comboBox.leftPadding
                         background: Item {}
@@ -181,6 +181,14 @@ WindowDialog {
                           MainCtx.controlbarProfileModel.deleteSelectedProfile()
                     }
                 }
+            }
+
+            Widgets.LabelExt {
+                Layout.fillWidth: true
+                text: qsTr("Drag items around and out of the box below to re-order them. Drag items into the box to remove them from the player.")
+                wrapMode: Text.WordWrap
+                font.pixelSize: VLCStyle.fontSize_normal
+                color: root.colorContext.fg.secondary
             }
 
             // The main context of the toolbareditor dialog:

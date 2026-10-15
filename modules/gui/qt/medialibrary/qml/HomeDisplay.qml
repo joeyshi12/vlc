@@ -36,14 +36,8 @@ Widgets.PageLoader {
         name: "continueWatching",
         component: continueWatchingComponent
     }, {
-        name: "favorites",
-        component: favoritesComponent
-    }, {
-        name: "newVideo",
-        component: newVideoComponent
-    }, {
-        name: "newMusic",
-        component: newMusicComponent
+        name: "listenAgain",
+        component: listenAgainComponent
     }]
 
     property int displayMarginBeginning: 0
@@ -64,7 +58,11 @@ Widgets.PageLoader {
             focus: true
 
             onSeeAllButtonClicked: (name, reason) => {
-                History.push([...root.pagePrefix, name], reason)
+                // The folders are listed in the videos page
+                if (name === "folders")
+                    History.push(["video"], reason)
+                else
+                    History.push([...root.pagePrefix, name], reason)
             }
         }
     }
@@ -118,26 +116,24 @@ Widgets.PageLoader {
     }
 
     Component {
-        id: favoritesComponent
+        id: listenAgainComponent
 
         Widgets.PageExt {
-            id: favoritesPage
+            id: listenAgainPage
 
-            title: qsTr("Favorites")
+            title: qsTr("Listen Again")
 
             MediaView {
                 focus: true
 
                 anchors.fill: parent
 
-                model: MLMediaModel {
-                    favoriteOnly: true
-
+                model: MLRecentAudioModel {
                     ml: MediaLib
 
-                    sortCriteria: favoritesPage.sort.criteria || "insertion"
-                    sortOrder: favoritesPage.sort.order
-                    searchPattern: favoritesPage.search.pattern
+                    sortCriteria: listenAgainPage.sort.criteria
+                    sortOrder: listenAgainPage.sort.order
+                    searchPattern: listenAgainPage.search.pattern
                 }
 
                 displayMarginBeginning: root.displayMarginBeginning
@@ -149,73 +145,4 @@ Widgets.PageLoader {
         }
     }
 
-    Component {
-        id: newVideoComponent
-
-        Widgets.PageExt {
-            id: newVideoPage
-
-            title: qsTr("New Videos")
-
-            VideoAll {
-                id: newVideo
-
-                anchors.fill: parent
-
-                focus: true
-
-                model: MLVideoModel {
-                    ml: MediaLib
-
-                    sortCriteria: newVideoPage.sort.criteria || "insertion"
-                    sortOrder: newVideoPage.sort.order
-                    searchPattern: newVideoPage.search.pattern
-                }
-
-                sectionProperty: model.sortCriteria === "title" ? "title_first_symbol" : ""
-
-                contextMenu: MLContextMenu {
-                    model: newVideo.model
-
-                    showPlayAsAudioAction: true
-                }
-
-                displayMarginBeginning: root.displayMarginBeginning
-                displayMarginEnd: root.displayMarginEnd
-
-                enableBeginningFade: root.enableBeginningFade
-                enableEndFade: root.enableEndFade
-            }
-        }
-    }
-
-    Component {
-        id: newMusicComponent
-
-        Widgets.PageExt {
-            id: newMusicPage
-
-            title: qsTr("New Music")
-
-            MediaView {
-                focus: true
-
-                anchors.fill: parent
-
-                model: MLAudioModel {
-                    ml: MediaLib
-
-                    sortCriteria: newMusicPage.sort.criteria || "insertion"
-                    sortOrder: newMusicPage.sort.order
-                    searchPattern: newMusicPage.search.pattern
-                }
-
-                displayMarginBeginning: root.displayMarginBeginning
-                displayMarginEnd: root.displayMarginEnd
-
-                enableBeginningFade: root.enableBeginningFade
-                enableEndFade: root.enableEndFade
-            }
-        }
-    }
 }

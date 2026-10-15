@@ -480,10 +480,11 @@ void SystemPalette::makeLightPalette()
     //base set
     {
         C::ColorSet CS = C::View;
-        setColor(CS, C::Bg, C::Primary, C::Normal, lightGrey100 );
+        // Light/BG/B1 of the design
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#E7E7E7") );
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::white );
 
-        setColor(CS, C::Fg, C::Primary, C::Normal, darkGrey300);
+        setColor(CS, C::Fg, C::Primary, C::Normal, QColor("#2E2E2E"));
         setColor(CS, C::Fg, C::Primary, C::Disabled, setColorAlpha(Qt::black, 0.3));
 
         setColor(CS, C::Fg, C::Secondary, C::Normal, setColorAlpha(Qt::black, 0.7));
@@ -516,8 +517,9 @@ void SystemPalette::makeLightPalette()
     //window banner & miniplayer
     {
         C::ColorSet CS = C::Window;
-        setColor(CS, C::Bg, C::Primary, C::Normal, lightGrey400); //looks not white in figma more like #FDFDFD
-        setColor(CS, C::Bg, C::Secondary, C::Normal, lightGrey400);
+        // Light/BG/A3 of the design, for the panels
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#D5D5D5"));
+        setColor(CS, C::Bg, C::Secondary, C::Normal, QColor("#D5D5D5"));
         setColor(CS, C::Decoration, C::Border, C::Normal, QColor{"#E0E0E0"}); //FIXME not a predef
     }
 
@@ -546,6 +548,7 @@ void SystemPalette::makeLightPalette()
     {
         C::ColorSet CS = C::ToolButton;
         setColor(CS, C::Bg, C::Primary, C::Normal, Qt::transparent);
+        setColor(CS, C::Bg, C::Primary, C::Hovered, setColorAlpha(Qt::black, 0.06));
         setColor(CS, C::Bg, C::Secondary, C::Normal, lightGrey400);
 
         setColor(CS, C::Fg, C::Primary, C::Normal, setColorAlpha(Qt::black, 0.6));
@@ -632,8 +635,10 @@ void SystemPalette::makeLightPalette()
     {
         C::ColorSet CS = C::Slider;
         setColor(CS, C::Bg, C::Primary, C::Normal, lightGrey400); //#EEEEEE on the designs
-        setColor(CS, C::Bg, C::Secondary, C::Normal, setColorAlpha("#lightGrey400", 0.2));
+        // Track and played part of the box-style seek bar and volume slider
+        setColor(CS, C::Bg, C::Secondary, C::Normal, setColorAlpha(Qt::black, 0.08));
         setColor(CS, C::Fg, C::Primary, C::Normal, orange800);
+        setColor(CS, C::Fg, C::Secondary, C::Normal, setColorAlpha(orange800, 0.3));
         setColor(CS, C::Fg, C::Positive, C::Normal, "#0F7B0F");  //FIXME
         setColor(CS, C::Fg, C::Neutral, C::Normal, "#9D5D00");  //FIXME
         setColor(CS, C::Fg, C::Negative, C::Normal, "#C42B1C");  //FIXME
@@ -693,7 +698,9 @@ void SystemPalette::makeDarkPalette()
 
     {
         C::ColorSet CS = C::View;
-        setColor(CS, C::Bg, C::Primary, C::Normal, darkGrey300 );
+        // Background of the pages ("Dark/BG/B1" of the design). The navigation
+        // and the play queue panels use the lighter Window colour.
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#0E0E0E") );
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black );
 
         setColor(CS, C::Fg, C::Primary, C::Normal, Qt::white );
@@ -729,7 +736,9 @@ void SystemPalette::makeDarkPalette()
     //window banner & miniplayer
     {
         C::ColorSet CS = C::Window;
-        setColor(CS, C::Bg, C::Primary, C::Normal, Qt::black); //FIXME
+        // Background of the top bar, control bar and miniplayer, "Dark/BG/A4"
+        // in the design. The seek bar and volume boxes are black on it.
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#191919"));
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black);
         setColor(CS, C::Decoration, C::Border, C::Normal, darkGrey800); //FIXME not a predef
     }
@@ -759,6 +768,7 @@ void SystemPalette::makeDarkPalette()
     {
         C::ColorSet CS = C::ToolButton;
         setColor(CS, C::Bg, C::Primary, C::Normal, Qt::transparent);
+        setColor(CS, C::Bg, C::Primary, C::Hovered, setColorAlpha(Qt::white, 0.06));
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::black);
 
         setColor(CS, C::Fg, C::Primary, C::Normal, setColorAlpha(Qt::white, 0.6));
@@ -847,7 +857,15 @@ void SystemPalette::makeDarkPalette()
         setColor(CS, C::Bg, C::Primary, C::Focused, setColorAlpha("#929292", 0.4));
         setColor(CS, C::Bg, C::Primary, C::Hovered, setColorAlpha("#929292", 0.4));
 
+        // Track and played part of the box-style seek bar and volume slider.
+        // The track is "Dark/BG/B2" of the design and the played part is the
+        // accent colour at 26 % of its brightness, so both stand out from the
+        // control bar behind them.
+        setColor(CS, C::Bg, C::Secondary, C::Normal, QColor("#090909"));
         setColor(CS, C::Fg, C::Primary, C::Normal, orange500);
+        setColor(CS, C::Fg, C::Secondary, C::Normal, QColor::fromRgbF(orange500.redF() * 0.26,
+                                                                      orange500.greenF() * 0.26,
+                                                                      orange500.blueF() * 0.26));
         setColor(CS, C::Fg, C::Positive, C::Normal, "#0F7B0F");  //FIXME
         setColor(CS, C::Fg, C::Neutral, C::Normal, "#9D5D00");  //FIXME
         setColor(CS, C::Fg, C::Negative, C::Normal, "#C42B1C");  //FIXME

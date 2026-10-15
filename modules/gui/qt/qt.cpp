@@ -52,6 +52,8 @@ extern "C" char **environ;
 #endif
 
 #include <QApplication>
+#include <QMenu>
+#include <QPalette>
 #include <QDate>
 #include <QMutex>
 #include <QtQuickControls2/QQuickStyle>
@@ -131,12 +133,38 @@ extern "C" char **environ;
 /*****************************************************************************
  * Local prototypes.
  *****************************************************************************/
+namespace {
+
+/* Gives the menus rounded corners and a translucent background, like the menus of the design.
+ * The attribute has to be set before the menu is shown, which is why this is done when the
+ * menu is polished. */
+class MenuStyleFilter : public QObject
+{
+public:
+    using QObject::QObject;
+
+    bool eventFilter( QObject *obj, QEvent *event ) override
+    {
+        if( event->type() == QEvent::Polish )
+        {
+            if( auto *menu = qobject_cast<QMenu*>( obj ) )
+                menu->setAttribute( Qt::WA_TranslucentBackground );
+        }
+        return false;
+    }
+};
+
+}
+
 static int  OpenInternal ( qt_intf_t * );
 static void CloseInternal( qt_intf_t * );
 static int  OpenIntf     ( vlc_object_t * );
 static int  OpenDialogs  ( vlc_object_t * );
 static void Close        ( vlc_object_t * );
 static int  WindowOpen   ( vlc_window_t * );
+
+/* Stream output that collects seek bar data, see player/media_timeline.cpp */
+int MediaTimelineStreamOpen( vlc_object_t * );
 static void ShowDialog   ( intf_thread_t *, int, int, intf_dialog_args_t * );
 
 
@@ -509,6 +537,14 @@ vlc_module_begin ()
         set_capability( "qtcsdmenu", 10 )
         set_callback( QtWin32CSDMenuOpen )
 #endif
+#ifdef ENABLE_SOUT
+    add_submodule ()
+        set_description( "Qt seek bar timeline reader" )
+        set_capability( "sout output", 0 )
+        add_shortcut( "qt_media_timeline" )
+        set_callback( MediaTimelineStreamOpen )
+#endif
+
     add_submodule()
         set_capability("qt theme provider", 1)
         set_description( "Qt basic system theme" )
@@ -1462,6 +1498,103 @@ static void *Thread( void *obj )
         }
     }
 #undef QTSTYLE_KEY
+
+    /* Menus: 10 px radius, 4 px padding, entries with 6 px radius. The colours follow the
+     * colour scheme of the interface (0: system, 1: light, 2: dark). */
+    {
+        const int scheme = getSettings()->value( "MainWindow/color-scheme-index", 0 ).toInt();
+        const bool dark = (scheme == 2)
+                       || (scheme == 0 && QApplication::palette().color( QPalette::Window ).lightness() < 128);
+        QColor bg = dark ? QColor( 0x19, 0x19, 0x19 ) : QColor( 0xF2, 0xF2, 0xF2 );
+        bg.setAlpha( 242 );
+        const QColor fg = dark ? QColor( 0xF0, 0xF0, 0xF0 ) : QColor( 0x1A, 0x1A, 0x1A );
+        const QColor sel = dark ? QColor( 0x2E, 0x2E, 0x2E ) : QColor( 0xDD, 0xDD, 0xDD );
+        /* Dialogs (preferences, open media, ...): colours of the interface, when the scheme is
+         * chosen in VLC. With the system scheme, the palette of the system is kept. */
+        if( scheme == 1 || scheme == 2 )
+        {
+            const QColor window   = dark ? QColor( 0x19, 0x19, 0x19 ) : QColor( 0xF2, 0xF2, 0xF2 );
+            const QColor base     = dark ? QColor( 0x0E, 0x0E, 0x0E ) : QColor( 0xFF, 0xFF, 0xFF );
+            const QColor button   = dark ? QColor( 0x27, 0x27, 0x27 ) : QColor( 0xE5, 0xE5, 0xE5 );
+            const QColor accent   = dark ? QColor( 0xD3, 0x79, 0x18 ) : QColor( 0xFF, 0x61, 0x0A );
+            const QColor disabled = dark ? QColor( 0x7A, 0x7A, 0x7A ) : QColor( 0x9A, 0x9A, 0x9A );
+
+            QPalette pal;
+            pal.setColor( QPalette::Window, window );
+            pal.setColor( QPalette::WindowText, fg );
+            pal.setColor( QPalette::Base, base );
+            pal.setColor( QPalette::AlternateBase, window );
+            pal.setColor( QPalette::Text, fg );
+            pal.setColor( QPalette::Button, button );
+            pal.setColor( QPalette::ButtonText, fg );
+            pal.setColor( QPalette::BrightText, Qt::white );
+            pal.setColor( QPalette::ToolTipBase, window );
+            pal.setColor( QPalette::ToolTipText, fg );
+            pal.setColor( QPalette::PlaceholderText, disabled );
+            pal.setColor( QPalette::Highlight, accent );
+            pal.setColor( QPalette::HighlightedText, Qt::white );
+            pal.setColor( QPalette::Link, accent );
+            pal.setColor( QPalette::Light, button.lighter( 130 ) );
+            pal.setColor( QPalette::Mid, button );
+            pal.setColor( QPalette::Dark, base );
+            pal.setColor( QPalette::Shadow, Qt::black );
+            for( QPalette::ColorRole role : { QPalette::WindowText, QPalette::Text, QPalette::ButtonText } )
+                pal.setColor( QPalette::Disabled, role, disabled );
+            QApplication::setPalette( pal );
+        }
+
+        /* Inputs and buttons of the dialogs, as in the design: 6 px radius, inputs in the
+         * darkest colour, buttons in the colour of the panels. Only with a scheme chosen in
+         * VLC, the system style is kept otherwise. */
+        QString widgetStyle;
+        if( scheme == 1 || scheme == 2 )
+        {
+            const QString box    = dark ? "#090909" : "#FFFFFF";
+            const QString border = dark ? "#2A2A2A" : "#C8C8C8";
+            const QString button = dark ? "#222222" : "#E0E0E0";
+            const QString hover  = dark ? "#2E2E2E" : "#D5D5D5";
+            const QString accent = dark ? "#D37918" : "#E8851A";
+            widgetStyle = QStringLiteral(
+                "QDialog QLineEdit, QDialog QSpinBox, QDialog QDoubleSpinBox, QDialog QComboBox,"
+                " QDialog QTextEdit, QDialog QPlainTextEdit {"
+                " background-color: %1; border: 1px solid %2; border-radius: 6px; padding: 4px 8px; }"
+                "QDialog QLineEdit:focus, QDialog QComboBox:focus, QDialog QSpinBox:focus { border-color: %5; }"
+                "QDialog QComboBox::drop-down { border: none; width: 24px; }"
+                "QDialog QPushButton, QDialog QToolButton { background-color: %3; border: none;"
+                " border-radius: 6px; padding: 6px 16px; }"
+                "QDialog QPushButton:hover, QDialog QToolButton:hover { background-color: %4; }"
+                "QDialog QPushButton:default { background-color: %5; color: white; }"
+                "QDialog QTabWidget::pane { border: 1px solid %2; border-radius: 6px; }"
+                "QDialog QTabBar::tab { padding: 8px 16px; border: none; }"
+                "QDialog QTabBar::tab:selected { color: %5; border-bottom: 2px solid %5; }"
+                "QDialog QGroupBox { border: 1px solid %2; border-radius: 6px; margin-top: 14px; padding-top: 6px; }"
+                "QDialog QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; }"
+                "QDialog QTreeView, QDialog QListView, QDialog QTableView { background-color: %1;"
+                " border: 1px solid %2; border-radius: 6px; }" )
+                .arg( box, border, button, hover, accent );
+        }
+
+        app.setStyleSheet( QStringLiteral(
+            "QMenu { background-color: %1; color: %2; border-radius: 10px; padding: 4px; }"
+            "QMenu::item { padding: 6px 16px; border-radius: 6px; }"
+            "QMenu::item:selected { background-color: %3; }"
+            "QMenu::item:disabled { color: gray; }"
+            "QMenu::separator { height: 1px; margin: 4px 8px; background: %3; }"
+            "%4" )
+            .arg( bg.name( QColor::HexArgb ), fg.name(), sel.name(), widgetStyle ) );
+        app.installEventFilter( new MenuStyleFilter( &app ) );
+    }
+
+    /* Use the font of the design when it is installed, and the font of the system otherwise */
+    {
+        QFont font = QApplication::font();
+        QStringList families = font.families();
+        if( families.isEmpty() )
+            families << font.family();
+        families.prepend( QStringLiteral("Inter") );
+        font.setFamilies( families );
+        QApplication::setFont( font );
+    }
 
     /* Launch */
     app.exec();

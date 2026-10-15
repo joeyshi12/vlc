@@ -23,10 +23,10 @@ import VLC.Style
 import VLC.Playlist
 import VLC.Util
 
-Widgets.IconToolButton {
+Widgets.SvgToolButton {
     id: prevBtn
 
-    text: VLCIcons.previous
+    iconName: "previous"
     enabled: MainPlaylistController.hasPrev
     onClicked: MainPlaylistController.prev()
     description: qsTr("Previous")

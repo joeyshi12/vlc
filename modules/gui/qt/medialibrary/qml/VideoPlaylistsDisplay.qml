@@ -25,6 +25,7 @@ import VLC.MediaLibrary
 
 import VLC.Widgets as Widgets
 import VLC.Style
+import VLC.Dialogs
 
 Widgets.PageLoader {
     id: root
@@ -59,6 +60,9 @@ Widgets.PageLoader {
 
             title: qsTr("Playlists")
 
+            addAction: () => DialogsProvider.newPlaylistDialog()
+            addDescription: qsTr("New playlist")
+
             PlaylistMediaList {
                 id: playlistView
 
@@ -67,6 +71,10 @@ Widgets.PageLoader {
                 focus: true
 
                 isMusic: false
+
+                // The page of the sidebar shows all the playlists, the one of
+                // the videos only the video playlists
+                allTypes: root.pagePrefix.length > 0 && root.pagePrefix[0] === "playlists"
 
                 searchPattern: playlistPage.search.pattern
                 sortOrder: playlistPage.sort.order

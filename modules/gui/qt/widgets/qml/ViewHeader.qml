@@ -83,20 +83,26 @@ T.Pane {
 
         anchors.fill: parent
 
-        SubtitleLabel {
+        spacing: VLCStyle.margin_xsmall
+
+        LabelExt {
             id: label
 
-            Layout.fillWidth: true
+            Layout.maximumWidth: row.width - button.width - row.spacing
+
+            elide: Text.ElideRight
+            textFormat: Text.PlainText
+            font.pixelSize: VLCStyle.fontSize_xxlarge
+            font.weight: Font.Normal
 
             color: theme.fg.primary
         }
 
-        TextToolButton {
+        // Chevron after the heading, which opens the whole list
+        SvgToolButton {
             id: button
 
             visible: false
-
-            Layout.preferredWidth: implicitWidth
 
             focus: true
 
@@ -105,13 +111,16 @@ T.Pane {
                 value: root.focusReason
             }
 
-            text: qsTr("See All")
-
-            font.pixelSize: VLCStyle.fontSize_large
+            iconName: "chevron-right"
+            description: qsTr("See All")
 
             Navigation.parentItem: root
 
             onClicked: root.seeAllButtonClicked(focusReason)
+        }
+
+        Item {
+            Layout.fillWidth: true
         }
     }
 }

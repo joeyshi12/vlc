@@ -43,7 +43,9 @@ Widgets.GridItem {
     fillMode: Image.Stretch
 
     title: model.title || qsTr("Unknown title")
-    subtitle: model?.duration?.formatHMS() ?? ""
+    // As in the design, only the name is shown. The items that were started are dimmer.
+    subtitle: ""
+    dimTitle: (model?.progress ?? 0) > 0
     pictureWidth: VLCStyle.gridCover_video_width
     pictureHeight: VLCStyle.gridCover_video_height
 

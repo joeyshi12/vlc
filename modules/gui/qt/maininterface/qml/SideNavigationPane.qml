@@ -51,7 +51,27 @@ T.Pane {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
+    // The panel floats with a gap around it, as in the design. The gap is
+    // part of the paddings and of the insets of the background.
+    // SVG icon (pixmaps/redesign/nav-<name>.svg) of the entries of the first level
+    readonly property var iconNames: ({
+        "home": "home",
+        "video": "videos",
+        "music": "songs",
+        "network": "streaming",
+        "playlists": "playlist",
+        "recent": "recent",
+        "add": "add"
+    })
+
+    readonly property real panelGap: VLCStyle.dp(8, VLCStyle.scale)
+
     padding: VLCStyle.margin_normal
+
+    topInset: panelGap
+    bottomInset: panelGap
+    leftInset: panelGap + safeAreaLeftMargin
+    rightInset: panelGap + safeAreaRightMargin
 
     readonly property ColorContext colorContext: ColorContext {
         id: theme
@@ -88,9 +108,9 @@ T.Pane {
         }
     }
 
-    background: Widgets.AcrylicBackground {
-        enabled: root.useAcrylic
-        tintColor: theme.bg.primary
+    background: Rectangle {
+        radius: VLCStyle.dp(6, VLCStyle.scale)
+        color: theme.bg.primary
     }
 
     contentItem:  Item {
@@ -163,9 +183,13 @@ T.Pane {
                     width: ListView.view.contentWidth
                     height: preferredHeight
 
-                    property real preferredHeight: shouldShow ? VLCStyle.buttonHeightNavigationPane : 0.0
+                    // Same distance between the icons as in the design (46 px)
+                    property real preferredHeight: shouldShow ? VLCStyle.dp(46, VLCStyle.scale) : 0.0
 
-                    leftPadding: root.safeAreaLeftMargin + VLCStyle.margin_xsmall
+                    leftPadding: root.safeAreaLeftMargin + VLCStyle.dp(16, VLCStyle.scale)
+
+                    iconName: (depth === 0 && uri && uri.length > 0) ? (root.iconNames[uri[0]] ?? "") : ""
+                    current: highlighted && depth === 0
                     rightPadding: root.safeAreaRightMargin
 
                     leftInset: root.safeAreaLeftMargin + implicitLeftInset
@@ -276,11 +300,16 @@ T.Pane {
                 iconTxt: VLCIcons.settings
                 text: qsTr("Preferences")
 
-                checked: DialogsProvider.prefsDialogVisible
+                checked: settingsDialog.opened
 
                 showText: root.delegateShowText
 
-                onClicked: DialogsProvider.prefsDialog()
+                onClicked: settingsDialog.open()
+
+                SettingsDialog {
+                    id: settingsDialog
+                    parent: T.Overlay.overlay
+                }
 
                 //SideNavigationDelegate is an ItemDelegate and has NoFocus by default
                 focusPolicy: Qt.StrongFocus

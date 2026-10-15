@@ -595,6 +595,83 @@ Item {
     }
 
     Loader {
+        id: addSubtitlesDialogLoader
+        active: false
+        source: "qrc:///qt/qml/VLC/Dialogs/AddSubtitlesDialog.qml"
+        onLoaded: {
+            item.rootWindow = root.bgContent
+            item.aboutToHide.connect(restoreFocus)
+        }
+
+        Connections {
+            target: DialogsProvider
+            enabled: MainCtx.mediaLibraryAvailable
+
+            function onAddSubtitlesDialogRequested() {
+                addSubtitlesDialogLoader.active = true
+                addSubtitlesDialogLoader.item.open()
+            }
+        }
+    }
+
+    Loader {
+        id: onboardingLoader
+        active: false
+        source: "qrc:///qt/qml/VLC/Dialogs/OnboardingDialog.qml"
+        onLoaded: item.aboutToHide.connect(restoreFocus)
+
+        Connections {
+            target: DialogsProvider
+
+            function onOnboardingRequested() {
+                onboardingLoader.active = true
+                onboardingLoader.item.open()
+            }
+        }
+    }
+
+    Loader {
+        id: networkStreamDialogLoader
+        active: false
+        source: "qrc:///qt/qml/VLC/Dialogs/NetworkStreamDialog.qml"
+        onLoaded: {
+            item.rootWindow = root.bgContent
+            item.aboutToHide.connect(restoreFocus)
+        }
+
+        Connections {
+            target: DialogsProvider
+
+            function onNetworkStreamDialogRequested() {
+                networkStreamDialogLoader.active = true
+                networkStreamDialogLoader.item.open()
+            }
+        }
+    }
+
+    Loader {
+        id: newPlaylistDialogLoader
+        active: false
+        // The dialog uses the types of the media library, which only exist
+        // when the media library is loaded.
+        source: "qrc:///qt/qml/VLC/Dialogs/NewPlaylistDialog.qml"
+        onLoaded: {
+            item.rootWindow = root.bgContent
+            item.aboutToHide.connect(restoreFocus)
+        }
+
+        Connections {
+            target: DialogsProvider
+            enabled: MainCtx.mediaLibraryAvailable
+
+            function onNewPlaylistDialogRequested() {
+                newPlaylistDialogLoader.active = true
+                newPlaylistDialogLoader.item.open()
+            }
+        }
+    }
+
+    Loader {
         id: toolbarEditorDialogLoader
         active: false
         source: "qrc:///qt/qml/VLC/Dialogs/ToolbarEditorDialog.qml"
