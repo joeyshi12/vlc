@@ -1,0 +1,307 @@
+/*****************************************************************************
+ * Copyright (C) 2026 VLC authors and VideoLAN
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * ( at your option ) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
+ *****************************************************************************/
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Templates as T
+
+import VLC.MainInterface
+import VLC.Style
+import VLC.Widgets as Widgets
+import VLC.Util
+
+// Settings of VLC, as in the design: search field and title at the top,
+// categories on the left, the options of the category on the right. The
+// configuration file is written when the dialog is closed.
+T.Popup {
+    id: root
+
+    modal: true
+    focus: true
+    closePolicy: T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutside
+
+    anchors.centerIn: T.Overlay.overlay
+
+    width: Math.min(VLCStyle.dp(1048, VLCStyle.scale), (parent ? parent.width : 1048) - 2 * VLCStyle.margin_large)
+    height: Math.min(VLCStyle.dp(865, VLCStyle.scale), (parent ? parent.height : 865) - 2 * VLCStyle.margin_large)
+
+    padding: 0
+
+    readonly property SettingsWidgets.Pal pal: SettingsWidgets.Pal { }
+
+    readonly property ColorContext colorContext: ColorContext {
+        id: theme
+        colorSet: ColorContext.Window
+        palette: VLCStyle.palette
+    }
+
+    readonly property var categories: [
+        { group: qsTr("App") },
+        { text: qsTr("General"), title: qsTr("Global Settings"), icon: "set-preferences", page: generalPage },
+        { text: qsTr("Interface"), title: qsTr("Interface Settings"), icon: "set-interface", page: interfacePage },
+        { text: qsTr("Privacy"), title: qsTr("Privacy Settings"), icon: "set-privacy", page: privacyPage },
+        { text: qsTr("Controls"), title: qsTr("Mouse, Keyboard & Remote Controls"), icon: "set-hotkeys", page: controlsPage },
+        { group: qsTr("Media") },
+        { text: qsTr("Playback"), title: qsTr("Playback Preferences"), icon: "set-playback", page: playbackPage },
+        { text: qsTr("Video"), title: qsTr("Video Defaults"), icon: "set-video", page: videoPage },
+        { text: qsTr("Audio"), title: qsTr("Audio Defaults"), icon: "set-audio", page: audioPage },
+        { text: qsTr("Subtitles"), title: qsTr("Subtitle Defaults"), icon: "set-subtitles", page: subtitlesPage },
+        { text: qsTr("Library"), title: qsTr("Playlists, Folders & Files"), icon: "set-folder", page: libraryPage },
+        { group: qsTr("System") },
+        { text: qsTr("Network"), title: qsTr("Network Connections & Security"), icon: "nav-streaming", page: networkPage },
+        { text: qsTr("Performance"), title: qsTr("Performance Settings"), icon: "set-preferences", page: performancePage },
+        { text: qsTr("Recording"), title: qsTr("Recording, Casting & Streaming Out"), icon: "set-record", page: recordingPage },
+        { text: qsTr("Extensions"), title: qsTr("Add-ons & Scripts"), icon: "set-plugins", page: extensionsPage }
+    ]
+
+    property int currentCategory: 1
+
+    readonly property string filter: searchField.searchPattern
+
+    // When searching, go to the first category that has a match
+    onFilterChanged: Qt.callLater(_showMatchingCategory)
+
+    function _showMatchingCategory() {
+        if (filter === "" || categories[currentCategory].page.hasMatches)
+            return
+        for (let i = 0; i < categories.length; ++i) {
+            if (categories[i].page && categories[i].page.hasMatches) {
+                currentCategory = i
+                return
+            }
+        }
+    }
+
+    onClosed: saver.save(MainCtx)
+
+    ConfigOption { id: saver }
+
+    T.Overlay.modal: Rectangle {
+        color: Qt.rgba(0, 0, 0, 0.4)
+    }
+
+    background: Rectangle {
+        radius: VLCStyle.dp(14, VLCStyle.scale)
+        color: root.pal.window
+
+        Widgets.RoundedRectangleShadow {
+            z: -1
+            blurRadius: VLCStyle.dp(15, VLCStyle.scale)
+            yOffset: VLCStyle.dp(8, VLCStyle.scale)
+            color: Qt.rgba(0, 0, 0, 0.46)
+        }
+    }
+
+    contentItem: ColumnLayout {
+        spacing: 0
+
+        // The popup is not a child of the main view, so the colours of the
+        // controls come from here
+        readonly property ColorContext colorContext: ColorContext {
+            colorSet: ColorContext.Window
+            palette: VLCStyle.palette
+        }
+
+        // Header: search field, title, close button
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: VLCStyle.dp(50, VLCStyle.scale)
+
+            color: root.pal.header
+            // Round the top corners like the dialog
+            radius: VLCStyle.dp(14, VLCStyle.scale)
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: parent.radius
+                color: parent.color
+            }
+
+            Widgets.SearchField {
+                id: searchField
+
+                anchors.left: parent.left
+                anchors.leftMargin: VLCStyle.dp(8, VLCStyle.scale)
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: VLCStyle.dp(200, VLCStyle.scale)
+                height: VLCStyle.dp(34, VLCStyle.scale)
+
+                focus: true
+            }
+
+            Widgets.LabelExt {
+                anchors.left: parent.left
+                anchors.leftMargin: VLCStyle.dp(216 + 24, VLCStyle.scale)
+                anchors.right: closeButton.left
+                anchors.verticalCenter: parent.verticalCenter
+
+                text: root.categories[root.currentCategory].title
+                font.pixelSize: VLCStyle.dp(16, VLCStyle.scale)
+                color: root.pal.title
+                elide: Text.ElideRight
+            }
+
+            Widgets.SvgToolButton {
+                id: closeButton
+
+                anchors.right: parent.right
+                anchors.rightMargin: VLCStyle.dp(14, VLCStyle.scale)
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: VLCStyle.dp(32, VLCStyle.scale)
+                height: width
+                iconName: "close"
+                description: qsTr("Close")
+                onClicked: root.close()
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+
+            // Categories
+            Rectangle {
+                Layout.preferredWidth: VLCStyle.dp(200, VLCStyle.scale)
+                Layout.fillHeight: true
+                Layout.margins: VLCStyle.dp(8, VLCStyle.scale)
+
+                radius: VLCStyle.dp(6, VLCStyle.scale)
+                color: root.pal.panel
+
+                Flickable {
+                    anchors.fill: parent
+                    anchors.margins: VLCStyle.dp(6, VLCStyle.scale)
+                    contentHeight: categoryColumn.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    ColumnLayout {
+                        id: categoryColumn
+                        width: parent.width
+                        spacing: VLCStyle.dp(8, VLCStyle.scale)
+
+                        Repeater {
+                            model: root.categories
+
+                            delegate: Loader {
+                                id: categoryLoader
+
+                                required property int index
+                                required property var modelData
+
+                                Layout.fillWidth: true
+
+                                visible: modelData.group !== undefined || root.filter === "" || modelData.page.hasMatches
+
+                                sourceComponent: modelData.group !== undefined ? groupComponent : itemComponent
+
+                                Component {
+                                    id: groupComponent
+
+                                    Widgets.LabelExt {
+                                        height: VLCStyle.dp(33, VLCStyle.scale)
+                                        leftPadding: VLCStyle.dp(10, VLCStyle.scale)
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: categoryLoader.modelData.group
+                                        font.pixelSize: VLCStyle.fontSize_normal
+                                        color: root.pal.groupText
+                                    }
+                                }
+
+                                Component {
+                                    id: itemComponent
+
+                                    T.ItemDelegate {
+                                        id: item
+
+                                        readonly property bool current: root.currentCategory === categoryLoader.index
+
+                                        implicitHeight: VLCStyle.dp(40, VLCStyle.scale)
+                                        padding: VLCStyle.dp(4, VLCStyle.scale)
+                                        focusPolicy: Qt.StrongFocus
+
+                                        onClicked: root.currentCategory = categoryLoader.index
+
+                                        Accessible.name: categoryLoader.modelData.text
+                                        Accessible.role: Accessible.PageTab
+                                        Accessible.selected: current
+
+                                        background: Rectangle {
+                                            radius: VLCStyle.dp(2, VLCStyle.scale)
+                                            color: item.current ? root.pal.selected
+                                                                : (item.hovered ? Qt.lighter(root.pal.panel, 1.15) : "transparent")
+                                            border.width: item.visualFocus ? VLCStyle.focus_border : 0
+                                            border.color: theme.visualFocus
+                                        }
+
+                                        contentItem: RowLayout {
+                                            spacing: VLCStyle.dp(8, VLCStyle.scale)
+
+                                            Item {
+                                                Layout.preferredWidth: VLCStyle.dp(32, VLCStyle.scale)
+                                                Layout.preferredHeight: VLCStyle.dp(32, VLCStyle.scale)
+
+                                                SettingsWidgets.Icon {
+                                                    anchors.centerIn: parent
+                                                    name: categoryLoader.modelData.icon + ((item.current && categoryLoader.modelData.icon.startsWith("set-")) ? "-active" : "")
+                                                    color: item.current ? theme.accent : root.pal.label
+                                                }
+                                            }
+
+                                            Widgets.LabelExt {
+                                                Layout.fillWidth: true
+                                                text: categoryLoader.modelData.text
+                                                font.pixelSize: VLCStyle.fontSize_normal
+                                                color: root.pal.itemText
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            StackLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                currentIndex: [1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15].indexOf(root.currentCategory)
+
+                SettingsPages.General { id: generalPage; filter: root.filter }
+                SettingsPages.Interface { id: interfacePage; filter: root.filter }
+                SettingsPages.Privacy { id: privacyPage; filter: root.filter }
+                SettingsPages.Controls { id: controlsPage; filter: root.filter }
+                SettingsPages.Playback { id: playbackPage; filter: root.filter }
+                SettingsPages.Video { id: videoPage; filter: root.filter }
+                SettingsPages.Audio { id: audioPage; filter: root.filter }
+                SettingsPages.Subtitles { id: subtitlesPage; filter: root.filter }
+                SettingsPages.Library { id: libraryPage; filter: root.filter }
+                SettingsPages.Network { id: networkPage; filter: root.filter }
+                SettingsPages.Performance { id: performancePage; filter: root.filter }
+                SettingsPages.Recording { id: recordingPage; filter: root.filter }
+                SettingsPages.Extensions { id: extensionsPage; filter: root.filter }
+            }
+        }
+    }
+}

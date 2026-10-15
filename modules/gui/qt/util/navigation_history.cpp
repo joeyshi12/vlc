@@ -19,6 +19,7 @@ void NavigationHistory::push(QStringList path, const QVariantMap& properties, Qt
     for (auto it =  properties.keyValueBegin(); it != properties.keyValueEnd(); ++it)
         prop->insert((*it).first, (*it).second);
 
+    clearForward();
     m_history.emplace_back(path, std::move(prop));
 
     updateCurrent();
@@ -31,6 +32,7 @@ void NavigationHistory::push(QStringList path, const QVariantMap& properties, Qt
 
 void NavigationHistory::push(QStringList path, Qt::FocusReason focusReason)
 {
+    clearForward();
     m_history.emplace_back(path, std::make_unique<QQmlPropertyMap>());
 
     updateCurrent();
@@ -139,7 +141,11 @@ void NavigationHistory::previous(Qt::FocusReason reason)
     if (m_history.size() == 1)
         return;
 
+    const bool hadForward = !m_forward.empty();
+    m_forward.push_back(std::move(m_history.back()));
     m_history.pop_back();
+    if (!hadForward)
+        emit nextEmptyChanged(false);
 
     while (!isNodeValid(*m_history.back().second)) {
         m_history.pop_back();
@@ -152,6 +158,44 @@ void NavigationHistory::previous(Qt::FocusReason reason)
 
     updateCurrent();
     emit navigate(reason);
+}
+
+void NavigationHistory::next(Qt::FocusReason reason)
+{
+    if (m_forward.empty())
+        return;
+
+    while (!m_forward.empty() && !isNodeValid(*m_forward.back().second))
+        m_forward.pop_back();
+    if (m_forward.empty())
+    {
+        emit nextEmptyChanged(true);
+        return;
+    }
+
+    m_history.push_back(std::move(m_forward.back()));
+    m_forward.pop_back();
+
+    if (m_history.size() == 2)
+        emit previousEmptyChanged(false);
+    if (m_forward.empty())
+        emit nextEmptyChanged(true);
+
+    updateCurrent();
+    emit navigate(reason);
+}
+
+void NavigationHistory::clearForward()
+{
+    if (m_forward.empty())
+        return;
+    m_forward.clear();
+    emit nextEmptyChanged(true);
+}
+
+bool NavigationHistory::isNextEmpty() const
+{
+    return m_forward.empty();
 }
 
 void NavigationHistory::updateCurrent()

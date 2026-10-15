@@ -58,7 +58,11 @@ Widgets.PageLoader {
             focus: true
 
             onSeeAllButtonClicked: (name, reason) => {
-                History.push([...root.pagePrefix, name], reason)
+                // The folders are listed in the videos page
+                if (name === "folders")
+                    History.push(["video"], reason)
+                else
+                    History.push([...root.pagePrefix, name], reason)
             }
         }
     }

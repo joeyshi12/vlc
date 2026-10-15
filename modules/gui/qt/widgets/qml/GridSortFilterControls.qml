@@ -9,7 +9,7 @@ NavigableRow {
     id: root
 
     spacing: VLCStyle.margin_normal
-    enabled: gridListBtn.visible || sortControl.visible || searchBox.visible
+    enabled: gridListBtn.visible || sortControl.visible || searchBox.enabled
 
     property SortMenu sortMenu: null
     required property SortCtx sort
@@ -25,7 +25,7 @@ NavigableRow {
         enabled: visible
         width: VLCStyle.bannerButton_width
         height: VLCStyle.bannerButton_height
-        font.pixelSize: VLCStyle.icon_banner
+        font.pixelSize: VLCStyle.icon_normal
         text: MainCtx.gridView ? VLCIcons.list : VLCIcons.grid
         description: qsTr("List/Grid")
         onClicked: MainCtx.gridView = !MainCtx.gridView
@@ -38,7 +38,7 @@ NavigableRow {
         enabled: visible
         width: VLCStyle.bannerButton_width
         height: VLCStyle.bannerButton_height
-        font.pixelSize: VLCStyle.icon_banner
+        font.pixelSize: VLCStyle.icon_normal
         description: qsTr("Sort")
 
         model: root.sort.model
@@ -56,13 +56,13 @@ NavigableRow {
         }
     }
 
-    SearchBox {
+    // The field is always shown, as in the design. It is disabled in the pages
+    // that can not be filtered.
+    SearchField {
         id: searchBox
 
-        //TODO: initialise visible value with MainCtx
-        visible: root.search.available
-        height: VLCStyle.bannerButton_height
-        buttonWidth: VLCStyle.bannerButton_width
+        enabled: root.search.available
+        height: VLCStyle.dp(34, VLCStyle.scale)
 
         Binding {
             target: root.search

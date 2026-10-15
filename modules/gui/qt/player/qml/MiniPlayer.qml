@@ -36,20 +36,10 @@ ControlBar {
 
     height: _delayedImplicitHeight
 
-    state: Player.isStarted ? "inViewport"
-                            : "outViewport"
-
-    Binding on state {
-        id: stateBinding
-        when: false
-        delayed: true
-        value: Player.isStarted ? "inViewport"
-                                : "outViewport"
-    }
-
-    Component.onCompleted: {
-        Qt.callLater(() => { stateBinding.when = true })
-    }
+    // The floating small player is used for embedded video and audio. A
+    // separate video window can not use it, so keep this bar in that case.
+    state: (Player.isStarted && Player.hasVideoOutput && !MainCtx.hasEmbededVideo)
+           ? "inViewport" : "outViewport"
 
     textPosition: (MainCtx.pinVideoControls) ? ControlBar.TimeTextPosition.LeftRightSlider
                                              : ControlBar.TimeTextPosition.Hide

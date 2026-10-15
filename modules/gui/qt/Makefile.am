@@ -316,6 +316,7 @@ libqt_plugin_la_SOURCES = \
 	util/color_scheme_model.cpp util/color_scheme_model.hpp \
 	util/ui_notifier.cpp util/ui_notifier.hpp \
 	util/color_svg_image_provider.cpp util/color_svg_image_provider.hpp \
+	util/config_option.cpp util/config_option.hpp \
 	util/vlcaccess_image_provider.cpp util/vlcaccess_image_provider.hpp \
 	util/covergenerator.cpp \
 	util/covergenerator.hpp \
@@ -511,6 +512,7 @@ nodist_libqt_plugin_la_SOURCES = \
 	util/color_scheme_model.moc.cpp \
 	util/ui_notifier.moc.cpp \
 	util/color_svg_image_provider.moc.cpp \
+	util/config_option.moc.cpp \
 	util/vlcaccess_image_provider.moc.cpp \
 	util/imageluminanceextractor.moc.cpp \
 	util/csdbuttonmodel.moc.cpp \
@@ -942,6 +944,36 @@ libqt_plugin_la_RES = \
 	pixmaps/menu/volume-low.svg \
 	pixmaps/menu/volume-muted.svg \
 	pixmaps/misc/cone.svg \
+	pixmaps/redesign/more.svg \
+	pixmaps/redesign/chevron-right.svg \
+	pixmaps/redesign/arrow-left.svg \
+	pixmaps/redesign/arrow-right.svg \
+	pixmaps/redesign/search.svg \
+	pixmaps/redesign/chevron-down.svg \
+	pixmaps/redesign/info.svg \
+	pixmaps/redesign/edit.svg \
+	pixmaps/redesign/set-audio-active.svg \
+	pixmaps/redesign/set-audio.svg \
+	pixmaps/redesign/set-folder-active.svg \
+	pixmaps/redesign/set-folder.svg \
+	pixmaps/redesign/set-hotkeys-active.svg \
+	pixmaps/redesign/set-hotkeys.svg \
+	pixmaps/redesign/set-interface-active.svg \
+	pixmaps/redesign/set-interface.svg \
+	pixmaps/redesign/set-playback-active.svg \
+	pixmaps/redesign/set-playback.svg \
+	pixmaps/redesign/set-plugins-active.svg \
+	pixmaps/redesign/set-plugins.svg \
+	pixmaps/redesign/set-preferences-active.svg \
+	pixmaps/redesign/set-preferences.svg \
+	pixmaps/redesign/set-privacy-active.svg \
+	pixmaps/redesign/set-privacy.svg \
+	pixmaps/redesign/set-record-active.svg \
+	pixmaps/redesign/set-record.svg \
+	pixmaps/redesign/set-subtitles-active.svg \
+	pixmaps/redesign/set-subtitles.svg \
+	pixmaps/redesign/set-video-active.svg \
+	pixmaps/redesign/set-video.svg \
 	pixmaps/redesign/audio.svg \
 	pixmaps/redesign/subtitles.svg \
 	pixmaps/redesign/playback-settings.svg \
@@ -1064,6 +1096,11 @@ libqml_module_dialogs_a_QML = \
 	dialogs/dialogs/qml/CustomDialog.qml \
 	dialogs/dialogs/qml/Dialogs.qml \
 	dialogs/dialogs/qml/ModalDialog.qml \
+	dialogs/dialogs/qml/DialogParts.qml \
+	dialogs/dialogs/qml/AddSubtitlesDialog.qml \
+	dialogs/dialogs/qml/NetworkStreamDialog.qml \
+	dialogs/dialogs/qml/NewPlaylistDialog.qml \
+	dialogs/dialogs/qml/OnboardingDialog.qml \
 	dialogs/dialogs/qml/WindowDialog.qml \
 	dialogs/toolbar/qml/EditorDNDDelegate.qml \
 	dialogs/toolbar/qml/EditorDNDView.qml\
@@ -1088,6 +1125,10 @@ libqml_module_maininterface_a_QML = \
 	maininterface/qml/MainViewLoader.qml \
 	maininterface/qml/MainDisplay.qml \
 	maininterface/qml/SideNavigationPane.qml \
+	maininterface/qml/SettingsDialog.qml \
+	maininterface/qml/SettingsPages.qml \
+	maininterface/qml/SettingsWidgets.qml \
+	maininterface/qml/ShortcutsDialog.qml \
 	maininterface/qml/SideNavigationDelegate.qml \
 	maininterface/qml/NoMedialibHome.qml
 
@@ -1108,6 +1149,7 @@ libqml_module_medialibrary_a_QML = \
 	medialibrary/qml/ArtistTopBanner.qml \
 	medialibrary/qml/AudioGridItem.qml \
 	medialibrary/qml/HomeDisplay.qml \
+	medialibrary/qml/RecentDisplay.qml \
 	medialibrary/qml/HomePage.qml \
 	medialibrary/qml/MediaView.qml \
 	medialibrary/qml/VideoGroupDisplay.qml \
@@ -1391,6 +1433,7 @@ libqml_module_widgets_a_QML = \
 	widgets/qml/ScaledImage.qml \
 	widgets/qml/TextAutoScroller.qml \
 	widgets/qml/SearchBox.qml \
+	widgets/qml/SearchField.qml \
 	widgets/qml/SliderExt.qml \
 	widgets/qml/SortControl.qml \
 	widgets/qml/SpinBoxExt.qml \

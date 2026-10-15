@@ -56,6 +56,11 @@ FocusScope {
 
     property bool _showMiniPlayer: false
 
+    // The small player is shown over the library while a video is playing
+    // in it, and for the audio files that are playing.
+    readonly property bool _showPip: (_showMiniPlayer && MainCtx.hasEmbededVideo)
+                                     || (Player.isStarted && !Player.hasVideoOutput)
+
     property bool _showCSD: MainCtx.clientSideDecoration
         && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
 
@@ -119,6 +124,12 @@ FocusScope {
         }, {
             name: "network",
             url: "qrc:///qt/qml/VLC/Network/BrowseDisplay.qml"
+        }, {
+            name: "playlists",
+            url: "qrc:///qt/qml/VLC/MediaLibrary/VideoPlaylistsDisplay.qml"
+        }, {
+            name: "recent",
+            url: "qrc:///qt/qml/VLC/MediaLibrary/RecentDisplay.qml"
         }, {
             name: "discover",
             url: "qrc:///qt/qml/VLC/Network/DiscoverDisplay.qml"
@@ -607,6 +618,12 @@ FocusScope {
                 console.assert(modelUri)
 
                 console.assert(item)
+
+                if (modelUri[0] === "add") {
+                    DialogsProvider.simpleOpenDialog()
+                    return
+                }
+
                 if ((sidebar.state !== 'expanded') && item.expandable) {
                     // TODO: Investigate opening the menu on hover, if
                     //       we switch to `Popup.Item` type of menus.
@@ -992,14 +1009,14 @@ FocusScope {
             }
 
             z: 4
-            visible: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-            enabled: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
+            visible: g_mainDisplay._showPip
+            enabled: g_mainDisplay._showPip
 
             Binding on visible {
                 id: visibleBinding
                 when: false
                 delayed: true
-                value: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
+                value: g_mainDisplay._showPip
             }
 
             Component.onCompleted: {

@@ -285,6 +285,15 @@ public:
 
         m_model.children.emplace_back(qtr("Network"), "network", VLCIcons::topbar_network, QStringLiteral(":/icons/ic_fluent_wifi_1.svg"));
 
+        if (m_hasMedialib)
+        {
+            m_model.children.emplace_back(qtr("Playlists"), "playlists", VLCIcons::playlist);
+            m_model.children.emplace_back(qtr("Recent"), "recent", VLCIcons::history);
+        }
+
+        // Not a page, it opens the dialog to open a file
+        m_model.children.emplace_back(qtr("Add item"), "add", VLCIcons::add);
+
         ModelEntry discoverEntry{ qtr("Discover"), "discover", VLCIcons::topbar_discover, QStringLiteral(":/icons/ic_fluent_globe.svg") };
         discoverEntry.children.emplace_back(qtr("Services"), "services");
 

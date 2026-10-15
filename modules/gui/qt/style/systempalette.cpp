@@ -480,10 +480,11 @@ void SystemPalette::makeLightPalette()
     //base set
     {
         C::ColorSet CS = C::View;
-        setColor(CS, C::Bg, C::Primary, C::Normal, lightGrey100 );
+        // Light/BG/B1 of the design
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#E7E7E7") );
         setColor(CS, C::Bg, C::Secondary, C::Normal, Qt::white );
 
-        setColor(CS, C::Fg, C::Primary, C::Normal, darkGrey300);
+        setColor(CS, C::Fg, C::Primary, C::Normal, QColor("#2E2E2E"));
         setColor(CS, C::Fg, C::Primary, C::Disabled, setColorAlpha(Qt::black, 0.3));
 
         setColor(CS, C::Fg, C::Secondary, C::Normal, setColorAlpha(Qt::black, 0.7));
@@ -516,8 +517,9 @@ void SystemPalette::makeLightPalette()
     //window banner & miniplayer
     {
         C::ColorSet CS = C::Window;
-        setColor(CS, C::Bg, C::Primary, C::Normal, lightGrey400); //looks not white in figma more like #FDFDFD
-        setColor(CS, C::Bg, C::Secondary, C::Normal, lightGrey400);
+        // Light/BG/A3 of the design, for the panels
+        setColor(CS, C::Bg, C::Primary, C::Normal, QColor("#D5D5D5"));
+        setColor(CS, C::Bg, C::Secondary, C::Normal, QColor("#D5D5D5"));
         setColor(CS, C::Decoration, C::Border, C::Normal, QColor{"#E0E0E0"}); //FIXME not a predef
     }
 

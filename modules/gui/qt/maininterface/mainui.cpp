@@ -67,6 +67,7 @@
 #include "dialogs/help/help.hpp" // UpdateModel
 #endif
 #include "util/vlchotkeyconverter.hpp"
+#include "util/config_option.hpp"
 
 #include "network/networkmediamodel.hpp"
 #include "network/networkdevicemodel.hpp"
@@ -417,6 +418,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterSingletonInstance<SVGColorImage>(uri, versionMajor, versionMinor, "SVGColorImage", new SVGColorImage(this));
         qmlRegisterSingletonInstance<VLCAccessImage>(uri, versionMajor, versionMinor, "VLCAccessImage", new VLCAccessImage(this));
         qmlRegisterType<DelayEstimator>( uri, versionMajor, versionMinor, "DelayEstimator" );
+        qmlRegisterType<ConfigOption>( uri, versionMajor, versionMinor, "ConfigOption" );
         qmlRegisterTypesAndRevisions<WheelToVLCConverter>( uri, versionMajor );
 
         qmlRegisterType<ImageLuminanceExtractor>( uri, versionMajor, versionMinor, "ImageLuminanceExtractor");
