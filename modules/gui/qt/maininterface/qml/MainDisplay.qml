@@ -1005,12 +1005,23 @@ FocusScope {
                 bottom: loaderUpdatePane.top
                 right: parent.right
                 bottomMargin: VLCStyle.margin_normal
+                // Keep the small player over the content, to the left of the
+                // docked queue when that panel is open.
                 rightMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
+                             + (playlistLoader.shown ? playlistLoader.width : 0)
             }
 
             z: 4
             visible: g_mainDisplay._showPip
             enabled: g_mainDisplay._showPip
+            queueVisible: pannelVisiblity.showPlayqueue
+
+            onQueueToggled: {
+                // The queue is the docked panel at the right, not part of the
+                // floating small player.
+                MainCtx.playqueuePanel.docked = true
+                pannelVisiblity.togglePlayqueueVisibility()
+            }
 
             Binding on visible {
                 id: visibleBinding
@@ -1025,16 +1036,25 @@ FocusScope {
 
             dragXMin: VLCStyle.applicationHorizontalMargin
             dragXMax: g_mainDisplay.width - playerPip.width - VLCStyle.applicationHorizontalMargin
+                      - (playlistLoader.shown ? playlistLoader.width : 0)
             dragYMin: localTopbar.y + localTopbar.height
             dragYMax: loaderUpdatePane.y - playerPip.height
 
-            //keep the player visible on resize
+            // Keep the player visible on resize and when the right queue
+            // changes width.
+            function clampX() {
+                if (playerPip.x > playerPip.dragXMax)
+                    playerPip.x = playerPip.dragXMax
+            }
+
+            Connections {
+                target: playlistLoader
+                function onWidthChanged() { playerPip.clampX() }
+            }
+
             Connections {
                 target: g_mainDisplay
-                function onWidthChanged() {
-                    if (playerPip.x > playerPip.dragXMax)
-                        playerPip.x = playerPip.dragXMax
-                }
+                function onWidthChanged() { playerPip.clampX() }
                 function onHeightChanged() {
                     if (playerPip.y > playerPip.dragYMax)
                         playerPip.y = playerPip.dragYMax
