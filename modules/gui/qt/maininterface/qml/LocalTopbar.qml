@@ -99,33 +99,37 @@ T.ToolBar {
                 Navigation.parentItem: root
                 Navigation.rightItem: playqueueButtonsTop
 
-                Widgets.IconToolButton {
-                    id: historyBack
-
-                    focus: true
-
-                    font.pixelSize: VLCStyle.icon_normal
-                    text: VLCIcons.back
-                    description: qsTr("Previous")
-
-                    AccessibleCompat.id: "historyBackButton"
-
-                    height: VLCStyle.bannerButton_height
-                    width: VLCStyle.bannerButton_width
-
-                    onClicked: History.previous()
-                    enabled: !History.previousEmpty
-
-                    Navigation.parentItem: navigationButtons
-                    Navigation.rightItem: playlistBtn
-                }
-
                 Widgets.BannerCone {
                     id: logo
+
+                    anchors.verticalCenter: parent.verticalCenter
 
                     sourceSize.width: VLCStyle.icon_normal
                     sourceSize.height: VLCStyle.icon_normal
                     color: theme.accent
+                }
+
+                Widgets.SvgToolButton {
+                    id: menuBtn
+
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    visible: !MainCtx.hasToolbarMenu
+                    focus: true
+
+                    iconName: "more"
+                    description: qsTr("Menu")
+                    checked: contextMenu.shown
+
+                    Navigation.parentItem: navigationButtons
+                    Navigation.rightItem: playlistBtn
+
+                    onClicked: contextMenu.popup(this.mapToGlobal(0, height))
+
+                    Menus.QmlGlobalMenu {
+                        id: contextMenu
+                        ctx: MainCtx
+                    }
                 }
             }
         }
@@ -163,34 +167,28 @@ T.ToolBar {
                     plListView: root.plListView
 
                     Navigation.parentItem: playqueueButtonsTop
-                    Navigation.rightItem: menuBtn
-                    Navigation.leftItem: historyBack
+                    Navigation.leftItem: menuBtn
 
                     onClicked:  root.togglePlayqueueVisibility()
                 }
-
-                Widgets.IconToolButton {
-                    id: menuBtn
-
-                    visible: !MainCtx.hasToolbarMenu
-                    font.pixelSize: VLCStyle.icon_normal
-                    text: VLCIcons.more
-                    description: qsTr("Menu")
-                    width: VLCStyle.bannerButton_width
-                    height: VLCStyle.bannerButton_height
-                    checked: contextMenu.shown
-
-                    Navigation.parentItem: playqueueButtonsTop
-                    Navigation.leftItem: playlistBtn
-
-                    onClicked: contextMenu.popup(this.mapToGlobal(0, height))
-
-                    Menus.QmlGlobalMenu {
-                        id: contextMenu
-                        ctx: MainCtx
-                    }
-                }
             }
+        }
+
+        // Title of the window, centred. It is only drawn when the window
+        // has no title bar of the system.
+        Widgets.LabelExt {
+            anchors.centerIn: parent
+
+            width: Math.min(implicitWidth, parent.width - 2 * Math.max(navigationButtons.width, playqueueButtonsTop.width + csdButtons.width) - VLCStyle.margin_large)
+
+            visible: root._showCSD
+            text: MainCtx.intfMainWindow.title
+            elide: Text.ElideRight
+            horizontalAlignment: Text.AlignHCenter
+            color: theme.fg.secondary
+            font.pixelSize: VLCStyle.fontSize_normal
+
+            Accessible.ignored: true
         }
 
         Loader {

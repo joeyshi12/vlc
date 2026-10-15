@@ -237,8 +237,15 @@ PanelCard {
             PanelWidgets.ComboBox { choices: Player.videoStereoMode; Accessible.name: qsTr("Video stereo mode") }
         }
 
+        // The colours and the effects are set in the dialog of the effects
+        PanelWidgets.ExpandRow {
+            Layout.topMargin: VLCStyle.margin_normal
+            text: qsTr("Colors")
+            onClicked: DialogsProvider.extendedDialog()
+        }
+
         PanelWidgets.WideButton {
-            text: qsTr("Show Advanced Settings")
+            text: qsTr("Open Advanced Settings")
             onClicked: DialogsProvider.extendedDialog()
         }
     }
@@ -297,8 +304,35 @@ PanelCard {
             }
         }
 
+        PanelWidgets.Separator { Layout.topMargin: VLCStyle.margin_normal }
+
+        // The filters are set in the dialog of the effects
+        PanelWidgets.Section {
+            text: qsTr("Filters")
+        }
+
+        PanelWidgets.ExpandRow {
+            text: qsTr("Equalizer")
+            onClicked: DialogsProvider.extendedDialog()
+        }
+
+        PanelWidgets.ExpandRow {
+            text: qsTr("Compressor")
+            onClicked: DialogsProvider.extendedDialog()
+        }
+
+        PanelWidgets.ExpandRow {
+            text: qsTr("Spatializer")
+            onClicked: DialogsProvider.extendedDialog()
+        }
+
+        PanelWidgets.ExpandRow {
+            text: qsTr("Stereo Widener")
+            onClicked: DialogsProvider.extendedDialog()
+        }
+
         PanelWidgets.WideButton {
-            text: qsTr("Show Advanced Settings")
+            text: qsTr("Open Advanced Settings")
             onClicked: DialogsProvider.extendedDialog()
         }
     }
@@ -352,7 +386,7 @@ PanelCard {
         }
 
         PanelWidgets.WideButton {
-            text: qsTr("Show Advanced Settings")
+            text: qsTr("Open Advanced Settings")
             onClicked: DialogsProvider.extendedDialog()
         }
     }

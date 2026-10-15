@@ -108,7 +108,7 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
     [this, initialItems](quint64, const Ctx& ctx) {
         endTransaction(); // this is intentionally called here and not after `append()`
 
-        if (ctx.createdPlaylistId.id)
+        if (ctx.createdPlaylistId.id && !initialItems.isEmpty())
         {
             append(ctx.createdPlaylistId, initialItems);
         }
@@ -149,7 +149,8 @@ void appendMediaIntoPlaylist(vlc_medialibrary_t* ml, int64_t playlistId, const s
 
             for (const auto& media : medias)
             {
-                assert(media.raw());
+                if (!media.raw() || !media.raw()->psz_uri)
+                    continue;
 
                 const char * const uri = media.raw()->psz_uri;
 

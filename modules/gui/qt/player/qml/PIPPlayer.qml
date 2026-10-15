@@ -27,7 +27,7 @@ import VLC.Playlist
 import VLC.Player
 import VLC.Util
 
-// Small player that floats over the library while a video is playing: the
+// Small player that floats over the library while a video or an audio file is playing: the
 // video with buttons shown on hover, the seek bar, the title, the folder and
 // the artist. The button on the right opens the play queue above the video.
 T.Control {
@@ -176,6 +176,27 @@ T.Control {
             Layout.margins: VLCStyle.dp(8, VLCStyle.scale)
             Layout.bottomMargin: 0
             implicitHeight: Math.round(width * 9 / 16)
+
+            // Background and cover, when there is no video (audio files)
+            Rectangle {
+                anchors.fill: parent
+                visible: !Player.hasVideoOutput
+                radius: VLCStyle.dp(8, VLCStyle.scale)
+                color: Qt.lighter(theme.bg.primary, 1.3)
+
+                Image {
+                    anchors.fill: parent
+                    anchors.margins: VLCStyle.dp(16, VLCStyle.scale)
+
+                    visible: Player.artwork.toString() !== ""
+                    source: Player.artwork
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    cache: false
+
+                    Accessible.ignored: true
+                }
+            }
 
             VideoSurface {
                 id: videoSurface

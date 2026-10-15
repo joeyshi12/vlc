@@ -83,34 +83,74 @@ Dialog {
         }
     }
 
+    // Card of the design: 14 px radius, a darker bar with the title and a
+    // close button at the top.
     background: Rectangle {
         color: theme.bg.primary
+        radius: VLCStyle.dp(14, VLCStyle.scale)
 
         Widgets.RoundedRectangleShadow {
-            yOffset: VLCStyle.dp(4, VLCStyle.scale)
-            blurRadius: VLCStyle.dp(3, VLCStyle.scale)
+            yOffset: VLCStyle.dp(8, VLCStyle.scale)
+            blurRadius: VLCStyle.dp(15, VLCStyle.scale)
 
             visible: (parent.color.a > 0.0)
 
-            opacity: 0.2
-
-            color: "black"
+            color: Qt.rgba(0, 0, 0, 0.46)
         }
     }
 
-    //FIXME use the right xxxLabel class
-    header: T.Label {
-        text: control.title
+    readonly property ColorContext headerContext: ColorContext {
+        id: headerTheme
+        palette: VLCStyle.palette
+        // Slider bg.secondary is the darkest colour of the theme
+        colorSet: ColorContext.Slider
+    }
+
+    header: Rectangle {
         visible: control.title
-        elide: Label.ElideRight
-        font.bold: true
-        color: theme.fg.primary
-        padding: 6
-        background: Rectangle {
-            x: 1; y: 1
-            width: parent.width - 2
-            height: parent.height - 1
-            color: theme.bg.primary
+
+        // The header is not a child of the content, it needs its own colours
+        readonly property ColorContext colorContext: ColorContext {
+            palette: VLCStyle.palette
+            colorSet: ColorContext.Window
+        }
+        implicitHeight: VLCStyle.dp(50, VLCStyle.scale)
+        color: headerTheme.bg.secondary
+        radius: VLCStyle.dp(14, VLCStyle.scale)
+
+        // Square bottom corners
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: parent.radius
+            color: parent.color
+        }
+
+        T.Label {
+            anchors.left: parent.left
+            anchors.leftMargin: VLCStyle.dp(19, VLCStyle.scale)
+            anchors.right: closeButton.left
+            anchors.verticalCenter: parent.verticalCenter
+
+            text: control.title
+            elide: Label.ElideRight
+            font.pixelSize: VLCStyle.fontSize_normal
+            color: theme.fg.secondary
+        }
+
+        Widgets.SvgToolButton {
+            id: closeButton
+
+            anchors.right: parent.right
+            anchors.rightMargin: VLCStyle.dp(9, VLCStyle.scale)
+            anchors.verticalCenter: parent.verticalCenter
+
+            width: VLCStyle.dp(32, VLCStyle.scale)
+            height: width
+            iconName: "close"
+            description: qsTr("Close")
+            onClicked: control.reject()
         }
     }
 

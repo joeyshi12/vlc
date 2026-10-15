@@ -42,6 +42,8 @@ Widgets.PageExt {
 
     hasGridListMode: true
 
+    itemCount: continueWatchingRow.model.count + listenAgainRow.model.count + foldersRow.model.count
+
     isSearchable: true
 
     property real listCoverHeight: VLCStyle.listAlbumCover_height
@@ -77,10 +79,10 @@ Widgets.PageExt {
         id: flickable
 
         implicitWidth: Math.max(coneNButtons.implicitWidth, mediaRows.implicitWidth)
-        implicitHeight: coneNButtons.implicitHeight + (_hasMedias ? mediaRows.implicitHeight : 0)
+        implicitHeight: _hasMedias ? mediaRows.implicitHeight : coneNButtons.implicitHeight
 
         contentWidth: width
-        contentHeight: _hasMedias ? coneNButtons.implicitHeight + mediaRows.implicitHeight
+        contentHeight: _hasMedias ? mediaRows.implicitHeight
                                   : height - topMargin - bottomMargin
 
         flickableDirection: Flickable.AutoFlickIfNeeded
@@ -156,12 +158,13 @@ Widgets.PageExt {
 
             focus: true
 
-            orientation: flickable._hasMedias ? Qt.Horizontal : Qt.Vertical
+            // The cone and the buttons are only shown when there is nothing else on the page
+            // (the files can be opened with the menu otherwise).
+            visible: !flickable._hasMedias
 
-            anchors.centerIn: flickable._hasMedias ? undefined : parent
-            anchors.top: flickable._hasMedias ? parent.top : undefined
-            anchors.left: flickable._hasMedias ? parent.left : undefined
-            anchors.leftMargin: flickable._hasMedias ? foldersRow.contentLeftMargin : 0
+            orientation: Qt.Vertical
+
+            anchors.centerIn: parent
 
             Navigation.parentItem: root
             Navigation.upItem: root.header
@@ -177,20 +180,20 @@ Widgets.PageExt {
         Widgets.NavigableCol {
             id: mediaRows
 
-            anchors.top: coneNButtons.bottom
+            anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
 
             spacing: 0 // NOTE: We depend on the top padding of view header currently.
 
             Navigation.parentItem: root
-            Navigation.upItem: coneNButtons
+            Navigation.upItem: flickable._hasMedias ? root.header : coneNButtons
 
             Widgets.ViewHeader {
                 visible: continueWatchingRow.visible
                 text: qsTr("Continue Watching")
                 view: continueWatchingRow
-                seeAllButton.visible: continueWatchingRow.model.maximumCount > continueWatchingRow.model.count
+                seeAllButton.visible: true
 
                 onSeeAllButtonClicked: function (reason) {
                     root.seeAllButtonClicked("continueWatching", reason)
@@ -270,7 +273,7 @@ Widgets.PageExt {
                 visible: listenAgainRow.visible
                 text: qsTr("Listen Again")
                 view: listenAgainRow
-                seeAllButton.visible: listenAgainRow.model.maximumCount > listenAgainRow.model.count
+                seeAllButton.visible: true
 
                 onSeeAllButtonClicked: function (reason) {
                     root.seeAllButtonClicked("listenAgain", reason)
@@ -344,7 +347,11 @@ Widgets.PageExt {
                 visible: foldersRow.visible
                 text: qsTr("Frequently Visited Folders")
                 view: foldersRow
-                seeAllButton.visible: false
+                seeAllButton.visible: true
+
+                onSeeAllButtonClicked: function (reason) {
+                    root.seeAllButtonClicked("folders", reason)
+                }
             }
 
             VideoAll {

@@ -43,6 +43,10 @@ MainViewLoader {
 
     property bool isMusic: false
 
+    // Shows the playlists of every type (the Playlists page of the sidebar)
+    property bool allTypes: false
+    property int itemCount: model?.count ?? -1
+
     readonly property int currentIndex: currentItem?.currentIndex ?? -1
 
     property Component header: null
@@ -109,7 +113,8 @@ MainViewLoader {
         id: playlistModel
         ml: MediaLib
 
-        playlistType: isMusic ? MLPlaylistListModel.PLAYLIST_TYPE_AUDIO
+        playlistType: allTypes ? MLPlaylistListModel.PLAYLIST_TYPE_ALL
+                    : isMusic ? MLPlaylistListModel.PLAYLIST_TYPE_AUDIO
                               : MLPlaylistListModel.PLAYLIST_TYPE_VIDEO
 
         coverSize: (isMusic) ? Qt.size(512, 512)

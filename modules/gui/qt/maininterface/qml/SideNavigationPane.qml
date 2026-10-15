@@ -58,7 +58,10 @@ T.Pane {
         "home": "home",
         "video": "videos",
         "music": "songs",
-        "network": "streaming"
+        "network": "streaming",
+        "playlists": "playlist",
+        "recent": "recent",
+        "add": "add"
     })
 
     readonly property real panelGap: VLCStyle.dp(8, VLCStyle.scale)
@@ -297,11 +300,16 @@ T.Pane {
                 iconTxt: VLCIcons.settings
                 text: qsTr("Preferences")
 
-                checked: DialogsProvider.prefsDialogVisible
+                checked: settingsDialog.opened
 
                 showText: root.delegateShowText
 
-                onClicked: DialogsProvider.prefsDialog()
+                onClicked: settingsDialog.open()
+
+                SettingsDialog {
+                    id: settingsDialog
+                    parent: T.Overlay.overlay
+                }
 
                 //SideNavigationDelegate is an ItemDelegate and has NoFocus by default
                 focusPolicy: Qt.StrongFocus

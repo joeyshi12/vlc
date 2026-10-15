@@ -32,6 +32,43 @@ import VLC.Dialogs
 T.Control {
     id: root
 
+    // Buttons of the zoom of the subtitle timeline, at both ends of the bar
+    component ZoomButton : T.Button {
+        id: zoomButton
+
+        property string glyph
+        property string description
+
+        Layout.preferredWidth: VLCStyle.dp(20, VLCStyle.scale)
+        Layout.preferredHeight: VLCStyle.dp(24, VLCStyle.scale)
+        Layout.alignment: Qt.AlignVCenter
+
+        focusPolicy: Qt.StrongFocus
+
+        T.ToolTip.visible: hovered
+        T.ToolTip.delay: VLCStyle.delayToolTipAppear
+        T.ToolTip.text: description
+        Accessible.name: description
+
+        background: Rectangle {
+            radius: VLCStyle.dp(4, VLCStyle.scale)
+            color: Qt.rgba(theme.accent.r * 0.26, theme.accent.g * 0.26, theme.accent.b * 0.26, 1)
+            opacity: zoomButton.enabled ? 1 : 0.4
+            border.width: zoomButton.visualFocus ? VLCStyle.focus_border : 0
+            border.color: theme.visualFocus
+        }
+
+        contentItem: Text {
+            text: zoomButton.glyph
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.pixelSize: VLCStyle.dp(16, VLCStyle.scale)
+            font.weight: Font.DemiBold
+            color: theme.accent
+        }
+    }
+
+
     property bool paintOnly: false
 
     // The control takes the free width of the control bar. The toolbar editor
@@ -123,8 +160,61 @@ T.Control {
             }
         }
 
+        // Zoom of the subtitle timeline: the bar shows 1 / zoom of the media
+        // around the playback position, and follows it.
+        QtObject {
+            id: timelineZoom
+
+            readonly property bool active: !root.paintOnly && MediaTimeline.subtitlesRequested
+                                           && trackPositionSlider.subtitleCues.length > 0
+            property int level: 0                       // the bar shows 1 / 2^level of the media
+            readonly property real span: 1 / Math.pow(2, level)
+            property real start: 0
+
+            onActiveChanged: if (!active) level = 0
+            onLevelChanged: center(Player.position)
+
+            function center(position) {
+                start = Helpers.clamp(position - span / 2, 0, 1 - span)
+            }
+
+            function pan(direction) {
+                start = Helpers.clamp(start + direction * span / 2, 0, 1 - span)
+            }
+        }
+
+        Connections {
+            target: Player
+            enabled: timelineZoom.level > 0
+            function onPositionChanged() {
+                if (Player.position < timelineZoom.start || Player.position > timelineZoom.start + timelineZoom.span)
+                    timelineZoom.center(Player.position)
+            }
+        }
+
+        RowLayout {
+            visible: timelineZoom.active
+            spacing: VLCStyle.dp(2, VLCStyle.scale)
+
+            ZoomButton {
+                glyph: "\u2039"
+                description: qsTr("Show an earlier part")
+                enabled: timelineZoom.level > 0 && timelineZoom.start > 0
+                onClicked: timelineZoom.pan(-1)
+            }
+            ZoomButton {
+                glyph: "\u2212"
+                description: qsTr("Zoom out")
+                enabled: timelineZoom.level > 0
+                onClicked: timelineZoom.level--
+            }
+        }
+
         SliderBar {
             id: trackPositionSlider
+
+            viewStart: timelineZoom.level > 0 ? timelineZoom.start : 0
+            viewEnd: timelineZoom.level > 0 ? timelineZoom.start + timelineZoom.span : 1
 
             Layout.fillWidth: true
             Layout.preferredWidth: root.paintOnly ? VLCStyle.dp(120, VLCStyle.scale) : -1
@@ -168,6 +258,24 @@ T.Control {
             Navigation.parentItem: root
 
             Keys.onPressed: (event) => Navigation.defaultKeyAction(event)
+        }
+
+        RowLayout {
+            visible: timelineZoom.active
+            spacing: VLCStyle.dp(2, VLCStyle.scale)
+
+            ZoomButton {
+                glyph: "+"
+                description: qsTr("Zoom in")
+                enabled: timelineZoom.level < 6
+                onClicked: timelineZoom.level++
+            }
+            ZoomButton {
+                glyph: "\u203A"
+                description: qsTr("Show a later part")
+                enabled: timelineZoom.level > 0 && timelineZoom.start + timelineZoom.span < 1
+                onClicked: timelineZoom.pan(1)
+            }
         }
 
         T.Label {

@@ -461,6 +461,65 @@ QtObject {
     }
 
     // Full width button at the bottom of a page.
+    // Row with a text and a chevron, in the colour of the input boxes. It
+    // opens a page or a dialog with more settings ("Expand Settings").
+    component ExpandRow : T.Button {
+        id: expandRow
+
+        Layout.fillWidth: true
+        Layout.leftMargin: VLCStyle.dp(20, VLCStyle.scale)
+        Layout.rightMargin: VLCStyle.dp(20, VLCStyle.scale)
+        Layout.bottomMargin: VLCStyle.dp(8, VLCStyle.scale)
+
+        implicitHeight: VLCStyle.dp(46, VLCStyle.scale)
+
+        focusPolicy: Qt.StrongFocus
+
+        readonly property ColorContext colorContext: BoxTheme {
+            id: expandTheme
+            hovered: expandRow.hovered
+            focused: expandRow.visualFocus
+            pressed: expandRow.down
+        }
+
+        // The text uses the colours of the panel, not the ones of the boxes
+        readonly property ColorContext textContext: Theme { id: expandTextTheme }
+
+        background: Rectangle {
+            radius: VLCStyle.dp(6, VLCStyle.scale)
+            color: expandTheme.bg.secondary
+            border.width: expandRow.visualFocus ? VLCStyle.focus_border : 0
+            border.color: expandTheme.visualFocus
+        }
+
+        contentItem: RowLayout {
+            Widgets.ListLabel {
+                Layout.fillWidth: true
+                Layout.leftMargin: VLCStyle.margin_normal
+
+                font.weight: Font.Normal
+                text: expandRow.text
+                color: expandTextTheme.fg.primary
+                font.pixelSize: VLCStyle.fontSize_normal
+            }
+
+            Image {
+                Layout.rightMargin: VLCStyle.margin_normal
+                Layout.preferredWidth: VLCStyle.dp(20, VLCStyle.scale)
+                Layout.preferredHeight: Layout.preferredWidth
+
+                property real _eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
+
+                sourceSize: Qt.size(width * _eDPR, height * _eDPR)
+                source: SVGColorImage.colorize("qrc:///redesign/chevron-right.svg")
+                                     .any({ "#8F8F8F": Qt.rgba(expandTextTheme.fg.secondary.r, expandTextTheme.fg.secondary.g, expandTextTheme.fg.secondary.b, 1.0) })
+                                     .uri()
+
+                Accessible.ignored: true
+            }
+        }
+    }
+
     component WideButton : T.Button {
         id: button
 

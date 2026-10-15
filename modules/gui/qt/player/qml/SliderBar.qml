@@ -28,6 +28,10 @@ import VLC.MainInterface
 T.ProgressBar {
     id: control
 
+    // The bar shows the part of the media from viewStart to viewEnd
+    from: viewStart
+    to: viewEnd
+
     readonly property real _hoveredScalingFactor: 1.8
     property int barHeight: VLCStyle.dp(5, VLCStyle.scale)
     readonly property real _scaledBarHeight: control.barHeight * _hoveredScalingFactor
@@ -39,7 +43,7 @@ T.ProgressBar {
     readonly property real _scaledSeekPointsRadius: _seekPointsRadius * _hoveredScalingFactor
 
     property bool _currentChapterHovered: false
-    property real _tooltipPosition: (Widgets.PointingToolTipAttached.instance?.pos.x ?? 0.0) / width
+    property real _tooltipPosition: _positionAt((Widgets.PointingToolTipAttached.instance?.pos.x ?? 0.0) / width)
 
     property color backgroundColor: theme.bg.primary
 
@@ -56,6 +60,21 @@ T.ProgressBar {
     // Box style only: subtitle lines as { start, end } positions from 0 to 1,
     // drawn as light blocks over the bar.
     property var subtitleCues: []
+
+    // Part of the media shown by the bar, from 0 to 1. The subtitle timeline
+    // can be zoomed in, the bar then shows only a part of the media.
+    property real viewStart: 0.0
+    property real viewEnd: 1.0
+
+    // Position in the media of a point of the bar, from 0 to 1 of its width
+    function _positionAt(fraction) {
+        return viewStart + fraction * (viewEnd - viewStart)
+    }
+
+    // Place on the bar, from 0 to 1, of a position in the media
+    function _fractionOf(position) {
+        return (position - viewStart) / (viewEnd - viewStart)
+    }
 
     // Colour of the waveform bars after the current position.
     readonly property color _waveformRestColor: (theme.palette?.isDark ?? true) ? Qt.rgba(1, 1, 1, 0.13)
@@ -101,7 +120,7 @@ T.ProgressBar {
 
         const length = Player.length
         if (hoverHandler.hovered)
-            _text = length.scale(Widgets.PointingToolTipAttached.instance.pos.x / control.width)
+            _text = length.scale(control._positionAt(Widgets.PointingToolTipAttached.instance.pos.x / control.width))
         else
             _text = Player.time
 
@@ -253,10 +272,10 @@ T.ProgressBar {
 
             onPressedChanged: {
                 if (pressed) {
-                    fsm.pressControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
+                    fsm.pressControl(control._positionAt(point.position.x / control.width), point.modifiers === Qt.ShiftModifier)
                 } else {
                     // NOTE: Point is still valid at this point.
-                    fsm.releaseControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
+                    fsm.releaseControl(control._positionAt(point.position.x / control.width), point.modifiers === Qt.ShiftModifier)
                 }
             }
         }
@@ -275,16 +294,16 @@ T.ProgressBar {
             property bool filterEvents: false
 
             function moveControl() {
-                fsm.moveControl(dragHandler.centroid.position.x / control.width,
+                fsm.moveControl(control._positionAt(dragHandler.centroid.position.x / control.width),
                                 dragHandler.centroid.modifiers === Qt.ShiftModifier)
             }
 
             onActiveChanged: {
                 if (active) {
                     filterEvents = false
-                    fsm.pressControl(centroid.position.x / control.width, centroid.modifiers === Qt.ShiftModifier)
+                    fsm.pressControl(control._positionAt(centroid.position.x / control.width), centroid.modifiers === Qt.ShiftModifier)
                 } else {
-                    fsm.releaseControl( centroid.position.x / control.width, centroid.modifiers === Qt.ShiftModifier)
+                    fsm.releaseControl(control._positionAt(centroid.position.x / control.width), centroid.modifiers === Qt.ShiftModifier)
                 }
             }
 
@@ -543,9 +562,13 @@ T.ProgressBar {
 
                     readonly property real usableWidth: blockTrack.width - 2 * control._blockInset
 
-                    x: control._blockInset + modelData.start * usableWidth
+                    readonly property real _start: Math.max(0, control._fractionOf(modelData.start))
+                    readonly property real _end: Math.min(1, control._fractionOf(modelData.end))
+
+                    visible: _end > _start
+                    x: control._blockInset + _start * usableWidth
                     y: control._blockInset
-                    width: Math.max(VLCStyle.dp(1, VLCStyle.scale), (modelData.end - modelData.start) * usableWidth)
+                    width: Math.max(VLCStyle.dp(1, VLCStyle.scale), (_end - _start) * usableWidth)
                     height: blockTrack.height - 2 * control._blockInset
                     radius: VLCStyle.dp(1, VLCStyle.scale)
                     color: theme.palette?.isDark ?? true ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(0, 0, 0, 0.12)
@@ -561,8 +584,8 @@ T.ProgressBar {
 
                     readonly property real startPosition: model.startPosition ?? 0.0
 
-                    visible: startPosition > 0.0
-                    x: control._blockInset + startPosition * (blockTrack.width - 2 * control._blockInset)
+                    visible: startPosition > 0.0 && startPosition > control.viewStart && startPosition < control.viewEnd
+                    x: control._blockInset + control._fractionOf(startPosition) * (blockTrack.width - 2 * control._blockInset)
                        - width / 2
                     y: control._blockInset
                     width: VLCStyle.dp(2, VLCStyle.scale)

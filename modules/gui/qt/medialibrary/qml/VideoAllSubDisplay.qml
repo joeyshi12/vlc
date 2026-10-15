@@ -27,6 +27,7 @@ import VLC.Widgets as Widgets
 import VLC.Util
 import VLC.Style
 import VLC.Menus
+import VLC.Dialogs
 
 Widgets.PageExt {
     id: root
@@ -34,6 +35,7 @@ Widgets.PageExt {
     signal showList(var model, int reason)
 
     property alias currentIndex: videoAll.currentIndex
+    itemCount: _meta?.model?.count ?? -1
 
     // NOTE: We are exposing a custom SortMenu with grouping options.
     sortMenu: SortMenuVideo {
@@ -69,6 +71,9 @@ Widgets.PageExt {
     // Functions
 
     title: qsTr("Videos")
+
+    addAction: () => DialogsProvider.addSubtitlesDialog()
+    addDescription: qsTr("Add subtitles")
 
     VideoAll {
         id: videoAll

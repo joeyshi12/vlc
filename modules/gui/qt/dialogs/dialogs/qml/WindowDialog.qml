@@ -18,6 +18,7 @@
 
 import QtQuick
 import QtQuick.Window
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
 

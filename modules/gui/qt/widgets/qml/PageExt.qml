@@ -39,10 +39,18 @@ T.Page {
 
     property bool isSearchable: _firstChild?.isSearchable ?? false
 
+    // Number shown at the right of the header. Pages with a nested view can
+    // expose their count through itemCount.
+    property int itemCount: _firstChild?.itemCount ?? _firstChild?.model?.count ?? -1
+
     property var sortModel: _firstChild?.sortModel ?? null
 
     //property is *not* readOnly, a PageLoader may define a localMenuDelegate common for its subviews (music, video)
     property SortMenu sortMenu: null
+
+    // When set, a "+" button in the header calls this function (new playlist, ...)
+    property var addAction: _firstChild?.addAction ?? null
+    property string addDescription: _firstChild?.addDescription ?? qsTr("Add")
 
     property int displayMarginBeginning: 0
     property int displayMarginEnd: 0
@@ -135,7 +143,7 @@ T.Page {
         id: defaultPageHeader
 
         // Properties
-        property alias text: label.text
+        property string text
 
         property alias sortMenu: gridSortFilter.sortMenu
 
@@ -159,7 +167,7 @@ T.Page {
         implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                                  implicitContentHeight + topPadding + bottomPadding)
 
-        Navigation.navigable: gridSortFilter.enabled
+        Navigation.navigable: true
 
         // Children
 
@@ -168,8 +176,40 @@ T.Page {
             colorSet: ColorContext.View
         }
 
+        // Number of items of the page, -1 when the page does not tell
+        readonly property int itemCount: root.itemCount
+
+        // Names of the pages, from the first element of the page path
+        readonly property var _sectionNames: ({
+            "home": qsTr("Home"),
+            "video": qsTr("Videos"),
+            "music": qsTr("Music"),
+            "network": qsTr("Network"),
+            "discover": qsTr("Discover")
+        })
+
+        readonly property var segments: {
+            const section = (root.pagePrefix.length > 0) ? (_sectionNames[root.pagePrefix[0]] ?? "") : ""
+            const title = root.title
+            if (section === "")
+                return title ? [title] : []
+            if (title === "" || title === section)
+                return [section]
+            return [section, title]
+        }
+
         background: Rectangle {
             color: theme.bg.primary
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+
+                height: VLCStyle.dp(1, VLCStyle.scale)
+                color: theme.fg.primary
+                opacity: 0.1
+            }
         }
 
         RowLayout {
@@ -177,12 +217,92 @@ T.Page {
 
             anchors.fill: parent
 
-            SubtitleLabel {
-                id: label
+            spacing: VLCStyle.margin_small
 
+            SvgToolButton {
+                id: backButton
+
+                iconName: "arrow-left"
+                description: qsTr("Previous")
+                enabled: !History.previousEmpty
+
+                onClicked: History.previous()
+
+                Navigation.parentItem: defaultPageHeader
+                Navigation.rightItem: forwardButton
+            }
+
+            SvgToolButton {
+                id: forwardButton
+
+                iconName: "arrow-right"
+                description: qsTr("Next")
+                enabled: !History.nextEmpty
+
+                onClicked: History.next()
+
+                Navigation.parentItem: defaultPageHeader
+                Navigation.leftItem: backButton
+                Navigation.rightItem: gridSortFilter
+            }
+
+            Row {
+                id: breadcrumb
+
+                Layout.leftMargin: VLCStyle.margin_small
                 Layout.fillWidth: true
 
-                color: theme.fg.primary
+                spacing: VLCStyle.margin_xsmall
+
+                Repeater {
+                    model: defaultPageHeader.segments
+
+                    delegate: Row {
+                        required property int index
+                        required property string modelData
+
+                        readonly property bool isLast: (index === defaultPageHeader.segments.length - 1)
+
+                        spacing: VLCStyle.margin_xsmall
+
+                        Text {
+                            visible: index > 0
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            text: "\u25B8"
+                            font.pixelSize: VLCStyle.fontSize_xsmall
+                            color: theme.fg.secondary
+                        }
+
+                        LabelExt {
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            text: modelData
+                            elide: Text.ElideRight
+                            width: Math.min(implicitWidth, VLCStyle.dp(280, VLCStyle.scale))
+
+                            font.pixelSize: VLCStyle.fontSize_large
+                            font.weight: (isLast && defaultPageHeader.segments.length > 1) ? Font.DemiBold : Font.Normal
+                            color: (isLast || defaultPageHeader.segments.length === 1) ? theme.fg.primary : theme.fg.secondary
+                        }
+                    }
+                }
+            }
+
+            LabelExt {
+                visible: defaultPageHeader.itemCount >= 0
+
+                text: defaultPageHeader.itemCount + " " + (defaultPageHeader.itemCount === 1 ? qsTr("item") : qsTr("items"))
+                color: theme.fg.secondary
+                font.pixelSize: VLCStyle.fontSize_normal
+            }
+
+            SvgToolButton {
+                visible: typeof root.addAction === "function"
+                iconName: "nav-add"
+                description: root.addDescription
+                onClicked: root.addAction()
+                Navigation.parentItem: defaultPageHeader
             }
 
             GridSortFilterControls {
@@ -191,6 +311,22 @@ T.Page {
                 sort: _sortCtx
                 search: _searchCtx
                 Navigation.parentItem: defaultPageHeader
+                Navigation.leftItem: forwardButton
+            }
+
+            SvgToolButton {
+                id: pageMenuButton
+
+                iconName: "more"
+                description: qsTr("Page menu")
+                checked: pageMenu.shown
+                onClicked: pageMenu.popup(mapToGlobal(0, height))
+                Navigation.parentItem: defaultPageHeader
+
+                QmlGlobalMenu {
+                    id: pageMenu
+                    ctx: MainCtx
+                }
             }
         }
     }
