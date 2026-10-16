@@ -51,21 +51,21 @@ T.Popup {
 
     readonly property var categories: [
         { group: qsTr("App") },
-        { text: qsTr("General"), title: qsTr("Global Settings"), icon: "set-preferences", page: generalPage },
-        { text: qsTr("Interface"), title: qsTr("Interface Settings"), icon: "set-interface", page: interfacePage },
-        { text: qsTr("Privacy"), title: qsTr("Privacy Settings"), icon: "set-privacy", page: privacyPage },
-        { text: qsTr("Controls"), title: qsTr("Mouse, Keyboard & Remote Controls"), icon: "set-hotkeys", page: controlsPage },
+        { text: qsTr("General"), title: qsTr("Global Settings"), icon: "set-preferences", page: generalPageLoader },
+        { text: qsTr("Interface"), title: qsTr("Interface Settings"), icon: "set-interface", page: interfacePageLoader },
+        { text: qsTr("Privacy"), title: qsTr("Privacy Settings"), icon: "set-privacy", page: privacyPageLoader },
+        { text: qsTr("Controls"), title: qsTr("Mouse, Keyboard & Remote Controls"), icon: "set-hotkeys", page: controlsPageLoader },
         { group: qsTr("Media") },
-        { text: qsTr("Playback"), title: qsTr("Playback Preferences"), icon: "set-playback", page: playbackPage },
-        { text: qsTr("Video"), title: qsTr("Video Defaults"), icon: "set-video", page: videoPage },
-        { text: qsTr("Audio"), title: qsTr("Audio Defaults"), icon: "set-audio", page: audioPage },
-        { text: qsTr("Subtitles"), title: qsTr("Subtitle Defaults"), icon: "set-subtitles", page: subtitlesPage },
-        { text: qsTr("Library"), title: qsTr("Playlists, Folders & Files"), icon: "set-folder", page: libraryPage },
+        { text: qsTr("Playback"), title: qsTr("Playback Preferences"), icon: "set-playback", page: playbackPageLoader },
+        { text: qsTr("Video"), title: qsTr("Video Defaults"), icon: "set-video", page: videoPageLoader },
+        { text: qsTr("Audio"), title: qsTr("Audio Defaults"), icon: "set-audio", page: audioPageLoader },
+        { text: qsTr("Subtitles"), title: qsTr("Subtitle Defaults"), icon: "set-subtitles", page: subtitlesPageLoader },
+        { text: qsTr("Library"), title: qsTr("Playlists, Folders & Files"), icon: "set-folder", page: libraryPageLoader },
         { group: qsTr("System") },
-        { text: qsTr("Network"), title: qsTr("Network Connections & Security"), icon: "nav-streaming", page: networkPage },
-        { text: qsTr("Performance"), title: qsTr("Performance Settings"), icon: "set-preferences", page: performancePage },
-        { text: qsTr("Recording"), title: qsTr("Recording, Casting & Streaming Out"), icon: "set-record", page: recordingPage },
-        { text: qsTr("Extensions"), title: qsTr("Add-ons & Scripts"), icon: "set-plugins", page: extensionsPage }
+        { text: qsTr("Network"), title: qsTr("Network Connections & Security"), icon: "nav-streaming", page: networkPageLoader },
+        { text: qsTr("Performance"), title: qsTr("Performance Settings"), icon: "set-preferences", page: performancePageLoader },
+        { text: qsTr("Recording"), title: qsTr("Recording, Casting & Streaming Out"), icon: "set-record", page: recordingPageLoader },
+        { text: qsTr("Extensions"), title: qsTr("Add-ons & Scripts"), icon: "set-plugins", page: extensionsPageLoader }
     ]
 
     property int currentCategory: 1
@@ -76,10 +76,11 @@ T.Popup {
     onFilterChanged: Qt.callLater(_showMatchingCategory)
 
     function _showMatchingCategory() {
-        if (filter === "" || categories[currentCategory].page.hasMatches)
+        const currentPage = categories[currentCategory].page?.item
+        if (filter === "" || currentPage?.hasMatches)
             return
         for (let i = 0; i < categories.length; ++i) {
-            if (categories[i].page && categories[i].page.hasMatches) {
+            if (categories[i].page?.item?.hasMatches) {
                 currentCategory = i
                 return
             }
@@ -100,19 +101,18 @@ T.Popup {
     }
 
     T.Overlay.modal: Rectangle {
-        color: Qt.rgba(0, 0, 0, 0.4)
+        // The Settings mock is an isolated surface. Keeping this backdrop
+        // opaque prevents the main interface from being blended again for
+        // every category hover frame.
+        color: VLCStyle.palette.isDark ? "#080808" : "#999999"
     }
 
     background: Rectangle {
         radius: VLCStyle.dp(14, VLCStyle.scale)
         color: root.pal.window
 
-        Widgets.RoundedRectangleShadow {
-            z: -1
-            blurRadius: VLCStyle.dp(15, VLCStyle.scale)
-            yOffset: VLCStyle.dp(8, VLCStyle.scale)
-            color: Qt.rgba(0, 0, 0, 0.46)
-        }
+        border.width: VLCStyle.dp(1, VLCStyle.scale)
+        border.color: VLCStyle.palette.isDark ? "#222222" : "#ACACAC"
     }
 
     contentItem: ColumnLayout {
@@ -218,7 +218,8 @@ T.Popup {
 
                                 Layout.fillWidth: true
 
-                                visible: modelData.group !== undefined || root.filter === "" || modelData.page.hasMatches
+                                visible: modelData.group !== undefined || root.filter === ""
+                                         || (modelData.page?.item?.hasMatches ?? true)
 
                                 sourceComponent: modelData.group !== undefined ? groupComponent : itemComponent
 
@@ -247,7 +248,12 @@ T.Popup {
                                         implicitHeight: VLCStyle.dp(40, VLCStyle.scale)
                                         padding: VLCStyle.dp(4, VLCStyle.scale)
                                         focusPolicy: Qt.StrongFocus
-                                        hoverEnabled: true
+                                        hoverEnabled: false
+
+                                        HoverHandler {
+                                            id: itemHover
+                                            acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+                                        }
 
                                         onClicked: root.currentCategory = categoryLoader.index
 
@@ -260,7 +266,10 @@ T.Popup {
                                             // The current and hovered categories use the
                                             // same neutral surface. The accent icon marks
                                             // the current category.
-                                            color: (item.current || item.hovered) ? root.pal.selected : "transparent"
+                                            color: item.current ? root.pal.selected
+                                                                : (itemHover.hovered
+                                                                   ? (VLCStyle.palette.isDark ? "#2A2A2A" : "#E0E0E0")
+                                                                   : "transparent")
                                             border.width: item.visualFocus ? VLCStyle.focus_border : 0
                                             border.color: theme.visualFocus
                                         }
@@ -301,19 +310,71 @@ T.Popup {
 
                 currentIndex: [1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15].indexOf(root.currentCategory)
 
-                SettingsPages.General { id: generalPage; filter: root.filter }
-                SettingsPages.Interface { id: interfacePage; filter: root.filter }
-                SettingsPages.Privacy { id: privacyPage; filter: root.filter }
-                SettingsPages.Controls { id: controlsPage; filter: root.filter }
-                SettingsPages.Playback { id: playbackPage; filter: root.filter }
-                SettingsPages.Video { id: videoPage; filter: root.filter }
-                SettingsPages.Audio { id: audioPage; filter: root.filter }
-                SettingsPages.Subtitles { id: subtitlesPage; filter: root.filter }
-                SettingsPages.Library { id: libraryPage; filter: root.filter }
-                SettingsPages.Network { id: networkPage; filter: root.filter }
-                SettingsPages.Performance { id: performancePage; filter: root.filter }
-                SettingsPages.Recording { id: recordingPage; filter: root.filter }
-                SettingsPages.Extensions { id: extensionsPage; filter: root.filter }
+                Loader {
+                    id: generalPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.General { filter: root.filter }
+                }
+                Loader {
+                    id: interfacePageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Interface { filter: root.filter }
+                }
+                Loader {
+                    id: privacyPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Privacy { filter: root.filter }
+                }
+                Loader {
+                    id: controlsPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Controls { filter: root.filter }
+                }
+                Loader {
+                    id: playbackPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Playback { filter: root.filter }
+                }
+                Loader {
+                    id: videoPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Video { filter: root.filter }
+                }
+                Loader {
+                    id: audioPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Audio { filter: root.filter }
+                }
+                Loader {
+                    id: subtitlesPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Subtitles { filter: root.filter }
+                }
+                Loader {
+                    id: libraryPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Library { filter: root.filter }
+                }
+                Loader {
+                    id: networkPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Network { filter: root.filter }
+                }
+                Loader {
+                    id: performancePageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Performance { filter: root.filter }
+                }
+                Loader {
+                    id: recordingPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Recording { filter: root.filter }
+                }
+                Loader {
+                    id: extensionsPageLoader
+                    active: StackLayout.isCurrentItem || root.filter !== ""
+                    sourceComponent: SettingsPages.Extensions { filter: root.filter }
+                }
             }
         }
     }

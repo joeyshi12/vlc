@@ -128,6 +128,7 @@ T.ToolBar {
                     TopBarMenu {
                         id: overflowMenu
                         parent: menuBtn
+                        overlayParent: T.Overlay.overlay
                     }
                 }
             }
