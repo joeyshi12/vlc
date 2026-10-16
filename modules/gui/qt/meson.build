@@ -660,6 +660,7 @@ qml_modules += {
         'maininterface/qml/SettingsDialog.qml',
         'maininterface/qml/SettingsPages.qml',
         'maininterface/qml/SettingsWidgets.qml',
+        'maininterface/qml/TopBarMenu.qml',
         'maininterface/qml/ShortcutsDialog.qml',
         'maininterface/qml/SideNavigationDelegate.qml',
     ),

@@ -1128,6 +1128,7 @@ libqml_module_maininterface_a_QML = \
 	maininterface/qml/SettingsDialog.qml \
 	maininterface/qml/SettingsPages.qml \
 	maininterface/qml/SettingsWidgets.qml \
+	maininterface/qml/TopBarMenu.qml \
 	maininterface/qml/ShortcutsDialog.qml \
 	maininterface/qml/SideNavigationDelegate.qml \
 	maininterface/qml/NoMedialibHome.qml

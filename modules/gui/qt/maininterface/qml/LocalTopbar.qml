@@ -27,7 +27,6 @@ import VLC.MainInterface
 import VLC.Style
 import VLC.Playlist
 import VLC.Widgets as Widgets
-import VLC.Menus as Menus
 import VLC.Util
 
 T.ToolBar {
@@ -119,16 +118,16 @@ T.ToolBar {
 
                     iconName: "more"
                     description: qsTr("Menu")
-                    checked: contextMenu.shown
+                    checked: overflowMenu.opened
 
                     Navigation.parentItem: navigationButtons
                     Navigation.rightItem: playlistBtn
 
-                    onClicked: contextMenu.popup(this.mapToGlobal(0, height))
+                    onClicked: overflowMenu.opened ? overflowMenu.close() : overflowMenu.open()
 
-                    Menus.QmlGlobalMenu {
-                        id: contextMenu
-                        ctx: MainCtx
+                    TopBarMenu {
+                        id: overflowMenu
+                        parent: menuBtn
                     }
                 }
             }

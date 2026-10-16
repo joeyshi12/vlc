@@ -24,7 +24,6 @@ import VLC.Style
 import VLC.Widgets as Widgets
 
 import VLC.MainInterface
-import VLC.Dialogs
 import VLC.Util
 
 T.Pane {
@@ -175,7 +174,7 @@ T.Pane {
                 }
 
                 Navigation.parentItem: root
-                Navigation.downItem: preferenceButton
+                Navigation.downItem: null
 
                 delegate: SideNavigationDelegate {
                     id: delegate
@@ -283,44 +282,6 @@ T.Pane {
                 }
             }
 
-            SideNavigationDelegate {
-                id: preferenceButton
-
-                AccessibleCompat.id: "preferencesButton"
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: VLCStyle.buttonHeightNavigationPane
-
-                leftPadding: root.safeAreaLeftMargin + VLCStyle.margin_xsmall
-                rightPadding: root.safeAreaRightMargin
-
-                leftInset: root.safeAreaLeftMargin + implicitLeftInset
-                rightInset: root.safeAreaRightMargin + implicitRightInset
-
-                iconTxt: VLCIcons.settings
-                text: qsTr("Preferences")
-
-                checked: settingsDialog.opened
-
-                showText: root.delegateShowText
-
-                onClicked: settingsDialog.open()
-
-                SettingsDialog {
-                    id: settingsDialog
-                    parent: T.Overlay.overlay
-                }
-
-                //SideNavigationDelegate is an ItemDelegate and has NoFocus by default
-                focusPolicy: Qt.StrongFocus
-
-                Navigation.parentItem: root
-                Navigation.upItem: listView
-
-                Keys.priority: Keys.AfterItem
-                Keys.onPressed: (e) => Navigation.defaultKeyAction(e)
-                Keys.onReleased: (e) => Navigation.defaultKeyReleaseAction(e)
-            }
 
         }
     }

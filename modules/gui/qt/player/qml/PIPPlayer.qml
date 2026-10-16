@@ -60,6 +60,28 @@ T.Control {
                                            closeButton.hovered ||
                                            popoutButton.hovered)
 
+    readonly property string _displayTitle: {
+        const title = Player.title.trim()
+        if (title !== "")
+            return title
+
+        // Local videos often have no title metadata. The design shows their
+        // file name, including the extension.
+        const url = Player.url.toString()
+        if (url !== "") {
+            try {
+                const cleanUrl = decodeURIComponent(url.split(/[?#]/)[0])
+                const fileName = cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1)
+                if (fileName !== "")
+                    return fileName
+            } catch (error) {
+                // Keep the player usable for malformed remote URLs.
+            }
+        }
+
+        return Player.name
+    }
+
     readonly property string _folderName: {
         const url = Player.url.toString()
         if (!url.startsWith("file:"))
@@ -342,7 +364,7 @@ T.Control {
             font.weight: Font.Normal
             font.pixelSize: VLCStyle.fontSize_xlarge
             color: theme.fg.secondary
-            text: Player.title
+            text: root._displayTitle
         }
 
         // Folder, artist and the queue button
