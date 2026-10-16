@@ -41,10 +41,13 @@ T.Popup {
     closePolicy: T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutside
     focus: true
 
+    required property Item overlayParent
+
     readonly property bool _dark: VLCStyle.palette.isDark
-    readonly property color _surface: _dark ? Qt.rgba(25 / 255, 25 / 255, 25 / 255, 0.96)
-                                            : Qt.rgba(213 / 255, 213 / 255, 213 / 255, 0.96)
-    readonly property color _hoverSurface: _dark ? "#222222" : "#E7E7E7"
+    // Opaque popup surfaces avoid blending the full menu on every pointer
+    // move. This matches the solid panel surfaces used by the application.
+    readonly property color _surface: _dark ? "#191919" : "#D5D5D5"
+    readonly property color _hoverSurface: _dark ? "#2A2A2A" : "#E0E0E0"
     readonly property color _text: _dark ? "#EAEAEA" : "#2E2E2E"
     readonly property color _mutedText: _dark ? "#8F8F8F" : "#3C3C3C"
     readonly property color _divider: _dark ? "#222222" : "#ACACAC"
@@ -70,7 +73,12 @@ T.Popup {
         bottomPadding: VLCStyle.dp(8, VLCStyle.scale)
 
         focusPolicy: Qt.StrongFocus
-        hoverEnabled: true
+        hoverEnabled: false
+
+        HoverHandler {
+            id: entryHover
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+        }
 
         onClicked: {
             root.close()
@@ -79,7 +87,7 @@ T.Popup {
 
         background: Rectangle {
             radius: VLCStyle.dp(6, VLCStyle.scale)
-            color: entry.down || entry.hovered ? root._hoverSurface : "transparent"
+            color: entry.down || entryHover.hovered ? root._hoverSurface : "transparent"
             border.width: entry.visualFocus ? VLCStyle.focus_border : 0
             border.color: theme.visualFocus
         }
@@ -92,7 +100,8 @@ T.Popup {
                 Layout.preferredHeight: VLCStyle.dp(24, VLCStyle.scale)
 
                 text: entry.iconText
-                color: entry.hovered || entry.visualFocus ? theme.accent : root._mutedText
+                // Keep the glyph node unchanged while the pointer moves.
+                color: entry.visualFocus ? theme.accent : root._mutedText
                 font.pixelSize: VLCStyle.icon_normal
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
@@ -126,12 +135,8 @@ T.Popup {
         radius: VLCStyle.dp(10, VLCStyle.scale)
         color: root._surface
 
-        Widgets.RoundedRectangleShadow {
-            z: -1
-            yOffset: VLCStyle.dp(8, VLCStyle.scale)
-            blurRadius: VLCStyle.dp(15, VLCStyle.scale)
-            color: Qt.rgba(0, 0, 0, 0.46)
-        }
+        border.width: VLCStyle.dp(1, VLCStyle.scale)
+        border.color: root._divider
     }
 
     contentItem: ColumnLayout {
@@ -168,7 +173,7 @@ T.Popup {
         MenuEntry {
             iconText: VLCIcons.settings
             text: qsTr("Settings")
-            onTriggered: settingsDialog.open()
+            onTriggered: root.openSettings()
         }
 
         MenuSeparator { }
@@ -186,16 +191,49 @@ T.Popup {
         }
     }
 
-    enter: Transition {
-        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: VLCStyle.duration_veryShort }
+    property var _settingsDialog: null
+    property var _settingsClosedHandler: null
+
+    function openSettings() {
+        // A close schedules the unused dialog for deletion. Cancel that work
+        // when Settings is opened again before the timer expires.
+        settingsUnloadTimer.stop()
+
+        if (!_settingsDialog) {
+            const component = Qt.createComponent("qrc:///qt/qml/VLC/MainInterface/SettingsDialog.qml")
+            if (component.status !== Component.Ready) {
+                console.warn("Unable to open Settings:", component.errorString())
+                return
+            }
+            _settingsDialog = component.createObject(root.overlayParent)
+            _settingsClosedHandler = () => settingsUnloadTimer.restart()
+            _settingsDialog.closed.connect(_settingsClosedHandler)
+        }
+        _settingsDialog.open()
     }
 
-    exit: Transition {
-        NumberAnimation { property: "opacity"; from: 1; to: 0; duration: VLCStyle.duration_veryShort }
+    // SettingsDialog saves preferences 100 ms after it closes. Unload the
+    // dialog after that work so the menu stays lightweight between uses.
+    Timer {
+        id: settingsUnloadTimer
+        interval: VLCStyle.duration_veryLong
+        repeat: false
+        onTriggered: {
+            if (root._settingsDialog && !root._settingsDialog.opened) {
+                root._settingsDialog.closed.disconnect(root._settingsClosedHandler)
+                root._settingsDialog.destroy()
+                root._settingsDialog = null
+                root._settingsClosedHandler = null
+            }
+        }
     }
 
-    SettingsDialog {
-        id: settingsDialog
-        parent: T.Overlay.overlay
+    Component.onDestruction: {
+        if (_settingsDialog) {
+            _settingsDialog.closed.disconnect(_settingsClosedHandler)
+            _settingsDialog.destroy()
+            _settingsDialog = null
+            _settingsClosedHandler = null
+        }
     }
 }
