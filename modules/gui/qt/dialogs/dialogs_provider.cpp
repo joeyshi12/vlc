@@ -57,6 +57,7 @@
 #include "dialogs/epg/epg.hpp"
 #include "dialogs/playlists/playlists.hpp"
 #include "dialogs/firstrun/firstrunwizard.hpp"
+#include "medialibrary/medialib.hpp"
 
 #include <vlc_url.h>
 
@@ -304,6 +305,11 @@ void DialogsProvider::prefsDialog()
 
 void DialogsProvider::firstRunDialog()
 {
+    if( receivers( SIGNAL( onboardingRequested() ) ) > 0 )
+    {
+        emit onboardingRequested();
+        return;
+    }
     ensureDialog(m_firstRunDialog);
     QVLCDialog::setWindowTransientParent(m_firstRunDialog.get(), nullptr, p_intf);
     m_firstRunDialog->show();
@@ -494,6 +500,16 @@ void DialogsProvider::mediaCodecDialog()
         m_mediaInfoDialog->hide();
 }
 
+void DialogsProvider::mediaStatisticsDialog()
+{
+    ensureDialog(m_mediaInfoDialog);
+
+    if( !m_mediaInfoDialog->isVisible() || m_mediaInfoDialog->currentTab() != MediaInfoDialog::INPUTSTATS_PANEL )
+        m_mediaInfoDialog->showTab( MediaInfoDialog::INPUTSTATS_PANEL );
+    else
+        m_mediaInfoDialog->hide();
+}
+
 QMessageBox::StandardButton DialogsProvider::messageDialog(const QString &text,
                                                            const QString &title,
                                                            const QMessageBox::StandardButtons buttons,
@@ -647,7 +663,89 @@ void DialogsProvider::openDiscDialog()
 }
 void DialogsProvider::openNetDialog()
 {
-    openDialog( OpenDialog::OPEN_NETWORK_TAB );
+    if( receivers( SIGNAL( networkStreamDialogRequested() ) ) > 0 )
+        emit networkStreamDialogRequested();
+    else
+        openDialog( OpenDialog::OPEN_NETWORK_TAB );
+}
+
+void DialogsProvider::newPlaylistDialog()
+{
+    emit newPlaylistDialogRequested();
+}
+
+void DialogsProvider::addSubtitlesDialog()
+{
+    emit addSubtitlesDialogRequested();
+}
+
+QStringList DialogsProvider::getOpenMediaUrls( const QString &title )
+{
+    return showSimpleOpen( title );
+}
+
+QString DialogsProvider::getFolderUrl()
+{
+    const QUrl url = QFileDialog::getExistingDirectoryUrl( nullptr, qfut( I_OP_DIR_WINTITLE ),
+                                                           p_intf->p_mi->getDialogFilePath(),
+                                                           QFileDialog::ShowDirsOnly,
+                                                           QStringList( QStringLiteral( "file" ) ) );
+    return url.isEmpty() ? QString() : url.toString( QUrl::FullyEncoded );
+}
+
+void DialogsProvider::finishOnboarding( bool networkAccess )
+{
+    config_PutInt( "metadata-network-access", networkAccess );
+    config_PutInt( "qt-privacy-ask", 0 );
+    if( p_intf->p_mi->getMediaLibrary() )
+        p_intf->p_mi->getMediaLibrary()->reload();
+    config_SaveConfigFile( p_intf );
+}
+
+void DialogsProvider::attachSubtitles( const QVariantList &attachments )
+{
+    MediaLib *mediaLib = p_intf->p_mi->getMediaLibrary();
+    if( !mediaLib )
+        return;
+
+    std::vector<std::pair<int64_t, QByteArray>> values;
+    values.reserve( attachments.size() );
+    for( const QVariant &entry : attachments )
+    {
+        const QVariantMap map = entry.toMap();
+        if( !map.value( QStringLiteral( "id" ) ).canConvert<MLItemId>() )
+            continue;
+        const MLItemId id = map.value( QStringLiteral( "id" ) ).value<MLItemId>();
+        const QByteArray subtitle = map.value( QStringLiteral( "subtitle" ) ).toUrl().toEncoded();
+        if( id.isValid() && !subtitle.isEmpty() )
+            values.emplace_back( id.id, subtitle );
+    }
+
+    mediaLib->runOnMLThread( this,
+        [values = std::move( values )]( vlc_medialibrary_t *ml ) {
+            for( const auto &[id, subtitle] : values )
+            {
+                bool present = false;
+                vlc_ml_media_t *media = vlc_ml_get_media( ml, id );
+                if( media && media->p_files )
+                {
+                    for( size_t i = 0; i < media->p_files->i_nb_items; ++i )
+                    {
+                        const vlc_ml_file_t &file = media->p_files->p_items[i];
+                        if( file.i_type == VLC_ML_FILE_TYPE_SUBTITLE && file.psz_mrl
+                            && subtitle == file.psz_mrl )
+                        {
+                            present = true;
+                            break;
+                        }
+                    }
+                }
+                if( media )
+                    vlc_ml_media_release( media );
+                if( !present )
+                    vlc_ml_media_add_external_mrl( ml, id, subtitle.constData(), VLC_ML_FILE_TYPE_SUBTITLE );
+            }
+        } );
 }
 void DialogsProvider::openCaptureDialog()
 {

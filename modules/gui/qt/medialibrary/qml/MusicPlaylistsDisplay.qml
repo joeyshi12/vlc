@@ -25,6 +25,7 @@ import VLC.MediaLibrary
 
 import VLC.Widgets as Widgets
 import VLC.Style
+import VLC.Dialogs
 
 Widgets.PageLoader {
     id: root
@@ -59,6 +60,9 @@ Widgets.PageLoader {
             id: playlistPage
 
             title: qsTr("Playlists")
+
+            addAction: () => DialogsProvider.newPlaylistDialog()
+            addDescription: qsTr("New playlist")
 
             PlaylistMediaList {
 

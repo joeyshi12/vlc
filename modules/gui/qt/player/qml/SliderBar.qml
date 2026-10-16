@@ -28,6 +28,10 @@ import VLC.MainInterface
 T.ProgressBar {
     id: control
 
+    // The bar shows the part of the media from viewStart to viewEnd
+    from: viewStart
+    to: viewEnd
+
     readonly property real _hoveredScalingFactor: 1.8
     property int barHeight: VLCStyle.dp(5, VLCStyle.scale)
     readonly property real _scaledBarHeight: control.barHeight * _hoveredScalingFactor
@@ -39,9 +43,44 @@ T.ProgressBar {
     readonly property real _scaledSeekPointsRadius: _seekPointsRadius * _hoveredScalingFactor
 
     property bool _currentChapterHovered: false
-    property real _tooltipPosition: (Widgets.PointingToolTipAttached.instance?.pos.x ?? 0.0) / width
+    property real _tooltipPosition: _positionAt((Widgets.PointingToolTipAttached.instance?.pos.x ?? 0.0) / width)
 
     property color backgroundColor: theme.bg.primary
+
+    // Draw the bar as a filled box with a rectangular handle at the end of the
+    // played part, instead of a thin line with a round handle.
+    property bool blockStyle: false
+    readonly property real _blockInset: VLCStyle.dp(2, VLCStyle.scale)
+    readonly property real _blockHandleWidth: VLCStyle.dp(waveform.length > 0 ? 4 : 8, VLCStyle.scale)
+
+    // Box style only: audio level from 0 to 1 for equal parts of the media,
+    // drawn as bars instead of the played part. A value of -1 is not known yet.
+    property var waveform: []
+
+    // Box style only: subtitle lines as { start, end } positions from 0 to 1,
+    // drawn as light blocks over the bar.
+    property var subtitleCues: []
+
+    // Part of the media shown by the bar, from 0 to 1. The subtitle timeline
+    // can be zoomed in, the bar then shows only a part of the media.
+    property real viewStart: 0.0
+    property real viewEnd: 1.0
+
+    // Position in the media of a point of the bar, from 0 to 1 of its width
+    function _positionAt(fraction) {
+        return viewStart + fraction * (viewEnd - viewStart)
+    }
+
+    // Place on the bar, from 0 to 1, of a position in the media
+    function _fractionOf(position) {
+        return (position - viewStart) / (viewEnd - viewStart)
+    }
+
+    // Colour of the waveform bars after the current position.
+    readonly property color _waveformRestColor: (theme.palette?.isDark ?? true) ? Qt.rgba(1, 1, 1, 0.13)
+                                                                                 : Qt.rgba(0, 0, 0, 0.2)
+    readonly property real waveformBarWidth: VLCStyle.dp(2, VLCStyle.scale)
+    readonly property real waveformBarSpacing: VLCStyle.dp(5, VLCStyle.scale)
     property real touchHandlerMargin: VLCStyle.touchHandlerMargin
 
     Keys.onRightPressed: Player.jumpFwd()
@@ -81,7 +120,7 @@ T.ProgressBar {
 
         const length = Player.length
         if (hoverHandler.hovered)
-            _text = length.scale(Widgets.PointingToolTipAttached.instance.pos.x / control.width)
+            _text = length.scale(control._positionAt(Widgets.PointingToolTipAttached.instance.pos.x / control.width))
         else
             _text = Player.time
 
@@ -233,10 +272,10 @@ T.ProgressBar {
 
             onPressedChanged: {
                 if (pressed) {
-                    fsm.pressControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
+                    fsm.pressControl(control._positionAt(point.position.x / control.width), point.modifiers === Qt.ShiftModifier)
                 } else {
                     // NOTE: Point is still valid at this point.
-                    fsm.releaseControl(point.position.x / control.width, point.modifiers === Qt.ShiftModifier)
+                    fsm.releaseControl(control._positionAt(point.position.x / control.width), point.modifiers === Qt.ShiftModifier)
                 }
             }
         }
@@ -255,16 +294,16 @@ T.ProgressBar {
             property bool filterEvents: false
 
             function moveControl() {
-                fsm.moveControl(dragHandler.centroid.position.x / control.width,
+                fsm.moveControl(control._positionAt(dragHandler.centroid.position.x / control.width),
                                 dragHandler.centroid.modifiers === Qt.ShiftModifier)
             }
 
             onActiveChanged: {
                 if (active) {
                     filterEvents = false
-                    fsm.pressControl(centroid.position.x / control.width, centroid.modifiers === Qt.ShiftModifier)
+                    fsm.pressControl(control._positionAt(centroid.position.x / control.width), centroid.modifiers === Qt.ShiftModifier)
                 } else {
-                    fsm.releaseControl( centroid.position.x / control.width, centroid.modifiers === Qt.ShiftModifier)
+                    fsm.releaseControl(control._positionAt(centroid.position.x / control.width), centroid.modifiers === Qt.ShiftModifier)
                 }
             }
 
@@ -321,7 +360,7 @@ T.ProgressBar {
 
         Rectangle {
             id: sliderRect
-            visible: !Player.hasChapters
+            visible: !Player.hasChapters && !control.blockStyle
             color: control.backgroundColor
             anchors.fill: parent
             radius: implicitHeight
@@ -333,9 +372,9 @@ T.ProgressBar {
             anchors.left: parent.left
             anchors.right: parent.right
             height: control.barHeight
-            visible: Player.hasChapters
+            visible: Player.hasChapters && !control.blockStyle
 
-            model: Player.chapters
+            model: control.blockStyle ? null : Player.chapters
             Item {
                 Rectangle {
                     id: seekpointsRect
@@ -430,7 +469,7 @@ T.ProgressBar {
         Rectangle {
             id: progressRect
             width: control.visualPosition * parent.width
-            visible: !Player.hasChapters
+            visible: !Player.hasChapters && !control.blockStyle
             color: theme.fg.primary
             height: control.barHeight
             radius: control._seekPointsRadius
@@ -444,6 +483,127 @@ T.ProgressBar {
                 when: (progressRect.mutabilityGroup !== undefined)
                 value: (Player.playingState === Player.PLAYING_STATE_PLAYING) ? Item.DynamicMutabilityGroup
                                                                               : Item.StaticMutabilityGroup
+            }
+        }
+
+        Rectangle {
+            id: blockTrack
+
+            anchors.fill: parent
+            visible: control.blockStyle
+
+            radius: VLCStyle.dp(6, VLCStyle.scale)
+            color: theme.bg.secondary
+
+            border.width: control.visualFocus ? VLCStyle.focus_border : 0
+            border.color: theme.visualFocus
+
+            Rectangle {
+                id: blockProgress
+
+                // With a waveform, only the handle at the end is drawn.
+                opacity: control.waveform.length > 0 ? 0 : 1
+
+                x: control._blockInset
+                y: control._blockInset
+                height: parent.height - 2 * control._blockInset
+                width: control._blockHandleWidth
+                       + control.visualPosition * (parent.width - 2 * control._blockInset - control._blockHandleWidth)
+
+                radius: VLCStyle.dp(4, VLCStyle.scale)
+                color: theme.fg.secondary
+
+                // TODO: Do not use `Binding` when minimum Qt is 6.12:
+                Binding {
+                    target: blockProgress
+                    property: "mutabilityGroup"
+                    when: (blockProgress.mutabilityGroup !== undefined)
+                    value: (Player.playingState === Player.PLAYING_STATE_PLAYING) ? Item.DynamicMutabilityGroup
+                                                                                  : Item.StaticMutabilityGroup
+                }
+
+            }
+
+            Item {
+                id: waveformBars
+
+                anchors.fill: parent
+                anchors.margins: control._blockInset
+                visible: control.waveform.length > 0
+
+                Repeater {
+                    model: control.waveform.length
+
+                    Rectangle {
+                        required property int index
+
+                        readonly property real level: control.waveform[index] ?? -1
+
+                        x: VLCStyle.dp(4, VLCStyle.scale) + index * control.waveformBarSpacing
+                        width: control.waveformBarWidth
+                        height: Math.max(VLCStyle.dp(2, VLCStyle.scale),
+                                         (level < 0 ? 0 : level) * waveformBars.height * 0.6)
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: width / 2
+
+                        color: ((x + width / 2) / waveformBars.width <= control.visualPosition)
+                               ? theme.fg.primary
+                               : control._waveformRestColor
+                        opacity: level < 0 ? 0.5 : 1
+                    }
+                }
+            }
+
+            Repeater {
+                model: control.blockStyle ? control.subtitleCues : null
+
+                Rectangle {
+                    required property var modelData
+
+                    readonly property real usableWidth: blockTrack.width - 2 * control._blockInset
+
+                    readonly property real _start: Math.max(0, control._fractionOf(modelData.start))
+                    readonly property real _end: Math.min(1, control._fractionOf(modelData.end))
+
+                    visible: _end > _start
+                    x: control._blockInset + _start * usableWidth
+                    y: control._blockInset
+                    width: Math.max(VLCStyle.dp(1, VLCStyle.scale), (_end - _start) * usableWidth)
+                    height: blockTrack.height - 2 * control._blockInset
+                    radius: VLCStyle.dp(1, VLCStyle.scale)
+                    color: theme.palette?.isDark ?? true ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(0, 0, 0, 0.12)
+                }
+            }
+
+            // Chapter starts are drawn as thin gaps across the bar.
+            Repeater {
+                model: control.blockStyle ? Player.chapters : null
+
+                Rectangle {
+                    required property var model
+
+                    readonly property real startPosition: model.startPosition ?? 0.0
+
+                    visible: startPosition > 0.0 && startPosition > control.viewStart && startPosition < control.viewEnd
+                    x: control._blockInset + control._fractionOf(startPosition) * (blockTrack.width - 2 * control._blockInset)
+                       - width / 2
+                    y: control._blockInset
+                    width: VLCStyle.dp(2, VLCStyle.scale)
+                    height: blockTrack.height - 2 * control._blockInset
+                    color: blockTrack.color
+                }
+            }
+
+            // Handle at the end of the played part.
+            Rectangle {
+                x: blockProgress.x + blockProgress.width - width
+                y: control._blockInset
+                width: control._blockHandleWidth
+                height: parent.height - 2 * control._blockInset
+
+                radius: VLCStyle.dp(4, VLCStyle.scale)
+                color: theme.fg.primary
+                visible: control.enabled
             }
         }
 
@@ -568,6 +728,9 @@ T.ProgressBar {
     Rectangle {
         id: sliderHandle
 
+        // The box style draws its own handle inside the bar.
+        opacity: control.blockStyle ? 0 : 1
+
         property int _size: control.barHeight * 3
 
         x: (control.visualPosition * control.availableWidth) - width / 2
@@ -625,7 +788,7 @@ T.ProgressBar {
             }
         ]
 
-        state: (hoverHandler.hovered || control.visualFocus)
+        state: (!control.blockStyle && (hoverHandler.hovered || control.visualFocus))
                ? ((control._currentChapterHovered || (Player.hasChapters && fsm._state === fsm.fsmHeld)) ? "visibleLarge" : "visible")
                : "hidden"
     }

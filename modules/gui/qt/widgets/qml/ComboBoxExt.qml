@@ -96,7 +96,7 @@ T.ComboBox {
         radius: VLCStyle.dp(2, VLCStyle.scale)
     }
 
-    popup: Popup {
+    popup: T.Popup {
         y: control.height - 1
 
         // NOTE: This Popup should be on top of other Popup(s) most of the time.
@@ -117,7 +117,7 @@ T.ComboBox {
                 color: theme.bg.secondary
             }
 
-            ScrollIndicator.vertical: ScrollIndicator { }
+            T.ScrollBar.vertical: Widgets.ScrollBarExt { }
         }
 
         background: Rectangle {

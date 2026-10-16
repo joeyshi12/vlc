@@ -15,6 +15,7 @@
 #include "medialibrary/mlmediamodel.hpp"
 #include "medialibrary/mlvideomodel.hpp"
 #include "medialibrary/mlrecentmediamodel.hpp"
+#include "medialibrary/mlrecentaudiomodel.hpp"
 #include "medialibrary/mlrecentvideomodel.hpp"
 #include "medialibrary/mlfoldersmodel.hpp"
 #include "medialibrary/mlvideogroupsmodel.hpp"
@@ -26,6 +27,7 @@
 
 #include "player/player_controller.hpp"
 #include "player/player_controlbar_model.hpp"
+#include "player/media_timeline.hpp"
 #include "player/control_list_model.hpp"
 #include "player/control_list_filter.hpp"
 #include "player/delay_estimator.hpp"
@@ -65,6 +67,7 @@
 #include "dialogs/help/help.hpp" // UpdateModel
 #endif
 #include "util/vlchotkeyconverter.hpp"
+#include "util/config_option.hpp"
 
 #include "network/networkmediamodel.hpp"
 #include "network/networkdevicemodel.hpp"
@@ -314,6 +317,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterUncreatableType<ProgramListModel>(uri, versionMajor, versionMinor, "ProgramListModel", "available programs of a media" );
         assert(m_intf->p_mainPlayerController);
         qmlRegisterSingletonInstance<PlayerController>(uri, versionMajor, versionMinor, "Player", m_intf->p_mainPlayerController);
+        qmlRegisterSingletonInstance<MediaTimeline>(uri, versionMajor, versionMinor, "MediaTimeline", new MediaTimeline(m_intf, m_mainCtx));
         qmlRegisterTypesAndRevisions<TimedText>(uri, versionMajor);
         qmlRegisterType<PlayerHighResolutionTimeUpdater>(uri, versionMajor, versionMinor, "HighResolutionTimeUpdater");
         qmlRegisterUncreatableMetaObject(VLCTickForeign::staticMetaObject, uri, versionMajor, versionMinor, "VLCTick", "Not Instantiable" );
@@ -414,6 +418,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterSingletonInstance<SVGColorImage>(uri, versionMajor, versionMinor, "SVGColorImage", new SVGColorImage(this));
         qmlRegisterSingletonInstance<VLCAccessImage>(uri, versionMajor, versionMinor, "VLCAccessImage", new VLCAccessImage(this));
         qmlRegisterType<DelayEstimator>( uri, versionMajor, versionMinor, "DelayEstimator" );
+        qmlRegisterType<ConfigOption>( uri, versionMajor, versionMinor, "ConfigOption" );
         qmlRegisterTypesAndRevisions<WheelToVLCConverter>( uri, versionMajor );
 
         qmlRegisterType<ImageLuminanceExtractor>( uri, versionMajor, versionMinor, "ImageLuminanceExtractor");
@@ -476,6 +481,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterType<MLMediaModel>( uri, versionMajor, versionMinor, "MLMediaModel" );
         qmlRegisterType<MLVideoModel>( uri, versionMajor, versionMinor, "MLVideoModel" );
         qmlRegisterType<MLRecentVideoModel>( uri, versionMajor, versionMinor, "MLRecentVideoModel" );
+        qmlRegisterType<MLRecentAudioModel>( uri, versionMajor, versionMinor, "MLRecentAudioModel" );
         qmlRegisterType<MLVideoGroupsModel>( uri, versionMajor, versionMinor, "MLVideoGroupsModel" );
         qmlRegisterType<MLVideoFoldersModel>( uri, versionMajor, versionMinor, "MLVideoFoldersModel" );
         qmlRegisterType<MLPlaylistListModel>( uri, versionMajor, versionMinor, "MLPlaylistListModel" );

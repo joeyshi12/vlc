@@ -97,8 +97,8 @@ T.Pane {
         Widgets.SliderExt {
             id: volControl
 
-            // FIXME: use VLCStyle
-            implicitWidth: VLCStyle.dp(100, VLCStyle.scale)
+            implicitWidth: VLCStyle.dp(88, VLCStyle.scale)
+            implicitHeight: VLCStyle.dp(28, VLCStyle.scale)
 
             // WARNING: Directly setting the insets break handle and background positioning.
             Binding on topInset {
@@ -110,8 +110,101 @@ T.Pane {
                 value: VLCStyle.touchHandlerMargin
             }
 
-            Layout.fillHeight: true
-            Layout.margins: VLCStyle.margin_xsmall
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: VLCStyle.margin_xsmall
+
+            // The volume is drawn as a wedge that is thin on the left and as
+            // tall as the control on the right. The part up to the current
+            // volume is filled with a gradient from green to red.
+            handle: Item {
+                x: volControl.leftPadding + volControl.visualPosition * volControl.availableWidth
+                y: volControl.topPadding
+                implicitWidth: 0
+                implicitHeight: volControl.availableHeight
+            }
+
+            background: Item {
+                x: volControl.leftPadding
+                y: volControl.topPadding
+
+                implicitWidth: volControl.implicitWidth
+                implicitHeight: volControl.implicitHeight
+
+                width: volControl.availableWidth
+                height: volControl.availableHeight
+
+                Canvas {
+                    id: wedge
+
+                    anchors.fill: parent
+
+                    readonly property color trackColor: volControl.colorContext.bg.secondary
+                    readonly property color focusColor: volControl.colorContext.visualFocus
+                    readonly property bool focused: volControl.visualFocus
+                    readonly property real level: volControl.visualPosition
+
+                    onTrackColorChanged: requestPaint()
+                    onFocusColorChanged: requestPaint()
+                    onFocusedChanged: requestPaint()
+                    onLevelChanged: requestPaint()
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+
+                    // Four sided shape with a straight top and bottom edge that
+                    // go from `halfLeft` to `halfRight` away from the middle line.
+                    // The corners are rounded by drawing the shape smaller and
+                    // then drawing a line of width 2 * radius around it.
+                    function drawWedge(ctx, x0, x1, halfLeft, halfRight, radius) {
+                        const cy = height / 2
+                        ctx.beginPath()
+                        ctx.moveTo(x0 + radius, cy - halfLeft + radius)
+                        ctx.lineTo(x1 - radius, cy - halfRight + radius)
+                        ctx.lineTo(x1 - radius, cy + halfRight - radius)
+                        ctx.lineTo(x0 + radius, cy + halfLeft - radius)
+                        ctx.closePath()
+                        ctx.lineJoin = "round"
+                        ctx.lineWidth = 2 * radius
+                        ctx.fill()
+                        ctx.stroke()
+                    }
+
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.reset()
+
+                        const dp = VLCStyle.dp(1, VLCStyle.scale)
+
+                        if (focused) {
+                            ctx.fillStyle = ctx.strokeStyle = focusColor
+                            drawWedge(ctx, -1.5 * dp, width + 1.5 * dp, 2.75 * dp + 1.5 * dp, height / 2 + 1.5 * dp, 3.5 * dp)
+                        }
+
+                        ctx.fillStyle = ctx.strokeStyle = trackColor
+                        drawWedge(ctx, 0, width, 2.75 * dp, height / 2, 2 * dp)
+
+                        // Part of the volume. The gradient covers the whole
+                        // width and is cut at the volume, so the colour at the
+                        // end of the filled part shows the volume level. The
+                        // colours of the design, 20 % darker.
+                        const x0 = 1.5 * dp
+                        const x1 = width - 1.5 * dp
+
+                        ctx.save()
+                        ctx.beginPath()
+                        ctx.rect(0, 0, level * width, height)
+                        ctx.clip()
+
+                        const gradient = ctx.createLinearGradient(x0, 0, x1, 0)
+                        gradient.addColorStop(0.0, "#76A913")
+                        gradient.addColorStop(0.579, "#8E8713")
+                        gradient.addColorStop(0.792, "#A96113")
+                        gradient.addColorStop(1.0, "#CC2C2C")
+                        ctx.fillStyle = ctx.strokeStyle = gradient
+                        drawWedge(ctx, x0, x1, 2.0 * dp, 12.5 * dp, 1.5 * dp)
+                        ctx.restore()
+                    }
+                }
+            }
 
             property bool _inhibitPlayerVolumeUpdate: false
 
@@ -248,8 +341,9 @@ T.Pane {
                 // NOTE: This shouldn't be visible when the volume stops before a 100.
                 visible: (root._maxvol > 100)
 
-                // FIXME: tick mark is not visible when it's over slider
-                color: root.sliderColor
+                // The design does not show a mark at 100 %. The item is kept
+                // for the click helper below.
+                color: "transparent"
 
                 // NOTE: This is a helper to select the default volume when clicking on the
                 //       tickmark. We apply a higher clamp value to achieve that behavior on

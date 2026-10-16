@@ -82,10 +82,10 @@ public:
         NAVIGATION_BUTTONS,
         PROGRAM_BUTTON,
         NAVIGATION_BOX,
-        RESERVED_0X2B,
-        RESERVED_0X2C,
-        RESERVED_0X2D,
-        RESERVED_0X2E,
+        TIMELINE_WIDGET,
+        AUDIO_PANEL_BUTTON,
+        SUBTITLE_PANEL_BUTTON,
+        PLAYBACK_PANEL_BUTTON,
         RESERVED_0X2F,
         RESERVED_0X30,
         RESERVED_0X31,
@@ -111,7 +111,7 @@ public:
     Q_ENUM(ControlType)
 
     static_assert(RESERVED_0X1F == 0x1F, "missaligned");
-    static_assert(RESERVED_0X2B == 0x2B, "missaligned");
+    static_assert(TIMELINE_WIDGET == 0x2B, "missaligned");
     static_assert(RESERVED_0X3F == 0x3F, "missaligned");
 
     // Basic functionality:

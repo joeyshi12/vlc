@@ -209,6 +209,7 @@ public slots:
     void mediaInfoDialog( const PlaylistItem& pItem );
     void mediaInfoDialog( const MLItemId& itemId );
     void mediaCodecDialog();
+    void mediaStatisticsDialog();
     bool questionDialog(const QString& text, const QString& title = {}) const;
     QMessageBox::StandardButton messageDialog(const QString& text,
                                               const QString& title = {},
@@ -246,6 +247,26 @@ public slots:
     void openUrlDialog();
     void openNetDialog();
     void openCaptureDialog();
+
+    /// Opens the dialog to create a playlist of the media library
+    void newPlaylistDialog();
+
+    /// Opens the dialog that associates subtitle files with media-library videos
+    void addSubtitlesDialog();
+
+    /// Asks for media files, returns their URLs
+    Q_INVOKABLE QStringList getOpenMediaUrls( const QString &title );
+
+    /// Asks for a folder, returns its URL or an empty string
+    Q_INVOKABLE QString getFolderUrl();
+
+    /// Called when the onboarding of the design is closed: the first run
+    /// questions are not asked again, and the media library is started.
+    Q_INVOKABLE void finishOnboarding( bool networkAccess );
+
+    /// Associates subtitle URLs with media-library items. Each map has an
+    /// MLItemId in "id" and a URL in "subtitle".
+    Q_INVOKABLE void attachSubtitles( const QVariantList &attachments );
 
     void PLOpenDir();
     void PLAppendDir();
@@ -288,6 +309,13 @@ public:
 signals:
     void releaseMouseEvents();
     void showToolbarEditorDialog();
+
+    // The dialogs of the design are QML dialogs, opened by Dialogs.qml.
+    // When nothing is connected (no QML interface), the widget dialogs are used.
+    void networkStreamDialogRequested();
+    void newPlaylistDialogRequested();
+    void onboardingRequested();
+    void addSubtitlesDialogRequested();
 
     //visiblity signal
     void openDialogVisibleChanged();

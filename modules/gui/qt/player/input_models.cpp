@@ -380,6 +380,7 @@ void ChapterListModel::setCurrent(int current)
         emit dataChanged(oldIndex, oldIndex, { Qt::CheckStateRole });
     if ( current >= 0 )
         emit dataChanged(currentIndex, currentIndex, { Qt::CheckStateRole });
+    emit currentChanged();
 }
 
 void ChapterListModel::resetTitle(const vlc_player_title *newTitle)
@@ -389,6 +390,7 @@ void ChapterListModel::resetTitle(const vlc_player_title *newTitle)
     m_current = -1;
     endResetModel();
     emit countChanged();
+    emit currentChanged();
 }
 
 void ChapterListModel::selectChapter(int index)

@@ -27,6 +27,7 @@ import VLC.Widgets as Widgets
 import VLC.Util
 import VLC.Playlist
 import VLC.Style
+import VLC.Dialogs
 
 T.Pane {
     id: root
@@ -54,6 +55,10 @@ T.Pane {
 
     property alias view: listView
 
+    // Replace the title, search and column header by a single row with the
+    // item count, the total duration and the queue actions.
+    property bool compactHeader: false
+
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
@@ -67,7 +72,7 @@ T.Pane {
 
     readonly property ColorContext colorContext: ColorContext {
         id: theme
-        colorSet: ColorContext.View
+        colorSet: ColorContext.Window
 
         focused: root.activeFocus
         hovered: root.hovered
@@ -122,8 +127,103 @@ T.Pane {
 
         readonly property ListView listView: listView
 
+        RowLayout {
+            id: compactHeaderRow
+
+            visible: root.compactHeader
+
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            Layout.leftMargin: VLCStyle.dp(28, VLCStyle.scale)
+            Layout.rightMargin: VLCStyle.dp(20, VLCStyle.scale)
+            Layout.topMargin: VLCStyle.margin_small
+            Layout.bottomMargin: VLCStyle.margin_small
+
+            spacing: VLCStyle.margin_small
+
+            Widgets.ListLabel {
+                Layout.fillWidth: true
+
+                font.weight: Font.Normal
+                color: theme.fg.secondary
+                font.pixelSize: VLCStyle.fontSize_large
+                elide: Text.ElideRight
+                text: {
+                    const count = MainPlaylistController.count
+                    if (count <= 0)
+                        return qsTr("No items")
+                    const duration = (root.model instanceof PlaylistListModel) ? root.model.duration : null
+                    const countText = (count === 1) ? qsTr("1 item") : qsTr("%1 items").arg(count)
+                    return duration ? qsTr("%1 - %2").arg(countText).arg(duration.formatLong())
+                                    : countText
+                }
+            }
+
+            Widgets.SortControl {
+                font.pixelSize: VLCStyle.icon_normal
+
+                description: qsTr("Sort")
+
+                enabled: MainPlaylistController.count > 1
+                checked: MainPlaylistController.sortKey !== PlaylistController.SORT_KEY_NONE
+                popupAbove: false
+
+                model: MainPlaylistController.sortKeyTitleList
+
+                onSortSelected: key => { MainPlaylistController.sortKey = key }
+
+                onSortOrderSelected: type => {
+                    if (type === Qt.AscendingOrder)
+                        MainPlaylistController.sortOrder = PlaylistController.SORT_ORDER_ASC
+                    else if (type === Qt.DescendingOrder)
+                        MainPlaylistController.sortOrder = PlaylistController.SORT_ORDER_DESC
+
+                    MainPlaylistController.sort()
+                }
+
+                sortOrder: (MainPlaylistController.sortOrder === PlaylistController.SORT_ORDER_DESC) ? Qt.DescendingOrder
+                                                                                                   : Qt.AscendingOrder
+                sortKey: MainPlaylistController.sortKey
+            }
+
+            Widgets.IconToolButton {
+                font.pixelSize: VLCStyle.icon_normal
+                checked: MainPlaylistController.repeatMode !== PlaylistController.PLAYBACK_REPEAT_NONE
+                text: (MainPlaylistController.repeatMode === PlaylistController.PLAYBACK_REPEAT_CURRENT)
+                      ? VLCIcons.repeat_one
+                      : VLCIcons.repeat_all
+                description: qsTr("Repeat")
+                onClicked: MainPlaylistController.toggleRepeatMode()
+            }
+
+            Widgets.IconToolButton {
+                font.pixelSize: VLCStyle.icon_normal
+                checked: MainPlaylistController.random
+                text: VLCIcons.shuffle
+                description: qsTr("Shuffle")
+                onClicked: MainPlaylistController.toggleRandom()
+            }
+
+            Widgets.IconToolButton {
+                font.pixelSize: VLCStyle.icon_normal
+                enabled: MainPlaylistController.count > 0
+                text: VLCIcons.remove
+                description: qsTr("Clear the queue")
+                onClicked: MainPlaylistController.clear()
+            }
+
+            Widgets.IconToolButton {
+                font.pixelSize: VLCStyle.icon_normal
+                text: VLCIcons.add
+                description: qsTr("Add files to the queue")
+                onClicked: DialogsProvider.PLAppendDialog()
+            }
+        }
+
         Column {
             id: headerColumn
+
+            visible: !root.compactHeader
 
             Layout.fillHeight: false
             Layout.fillWidth: true
@@ -257,11 +357,12 @@ T.Pane {
         Item {
             // Spacer
 
+            visible: !root.compactHeader
             implicitHeight: VLCStyle.margin_xsmall
         }
 
         RowLayout {
-            visible: listView.count !== 0
+            visible: listView.count !== 0 && !root.compactHeader
 
             Layout.fillHeight: false
             Layout.leftMargin: VLCStyle.margin_normal
@@ -375,8 +476,12 @@ T.Pane {
                 }
             }
 
-            fadingEdge.backgroundColor: (root.background && (root.background.color.a >= 1.0)) ? root.background.color
-                                                                                              : Qt.alpha(root.background.color, 0.0)
+            fadingEdge.backgroundColor: {
+                if (!root.background)
+                    return "transparent"
+                return (root.background.color.a >= 1.0) ? root.background.color
+                                                         : Qt.alpha(root.background.color, 0.0)
+            }
 
             function mappedSelectedIndexes() : var {
                 let mappedSelectedIndexes
@@ -627,7 +732,7 @@ T.Pane {
 
         focus: true
 
-        font.pixelSize: VLCStyle.icon_banner
+        font.pixelSize: VLCStyle.icon_normal
         text: VLCIcons.playlist
         description: qsTr("Play queue")
 

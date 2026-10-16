@@ -147,6 +147,9 @@ ListViewExt {
                                                       // contextButton is implemented as fixed column
                                                       - VLCStyle.contextButton_width - (VLCStyle.contextButton_margin * 2)
 
+    // Some views, such as the redesigned Videos list, do not show a
+    // column-label row. The columns still define row delegates and sorting.
+    property bool showTableHeader: true
     property bool sortingFromHeader: true
     property bool useCurrentSectionLabel: true
 
@@ -212,7 +215,7 @@ ListViewExt {
 
             property alias loadedHeader: headerLoader.item
 
-            height: headerLoader.height + tableHeader.height
+            height: headerLoader.height + (tableHeader.visible ? tableHeader.height : 0)
 
             Loader {
                 id: headerLoader
@@ -228,6 +231,8 @@ ListViewExt {
 
             DefaultTableViewHeader {
                 id: tableHeader
+
+                visible: root.showTableHeader
 
                 anchors {
                     top: headerLoader.bottom

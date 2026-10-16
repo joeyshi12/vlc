@@ -941,9 +941,7 @@ FocusScope {
         topMargin: VLCStyle.applicationVerticalMargin
         sideMargin: VLCStyle.applicationHorizontalMargin
 
-        textWidth: playlistVisibility.isPlaylistVisible
-                 ? rootPlayer.width - playlistpopup.width
-                 : rootPlayer.width
+        textWidth: rootPlayer.width
 
         // NOTE: With pinned controls, the top controls are hidden when switching to
         //       fullScreen. Except when resume is visible
@@ -964,7 +962,7 @@ FocusScope {
 
         plListView: {
             if (playlistpopup.active)
-                return playlistpopup.item
+                return playlistpopup.item?.playlistPane ?? null
             else if (playlistWindowLoader?.status === Loader.Ready)
                 return playlistWindowLoader.item.playlistView
             else
@@ -1029,106 +1027,61 @@ FocusScope {
         }
     }
 
-    Loader {
+    // The play queue panel and the settings panel float at the same place on
+    // the right, between the top bar and the control bar. Only one is open.
+    component SidePanelLoader : Loader {
+        id: panelLoader
+
+        // Whether the panel should be shown.
+        property bool shown: false
+
+        width: VLCStyle.dp(400, VLCStyle.scale)
+
+        z: 2
+        focus: false
+
+        visible: opacity > 0
+        opacity: (shown && status === Loader.Ready) ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: VLCStyle.duration_short; easing.type: Easing.InOutSine }
+        }
+
+        transform: Translate {
+            x: panelLoader.shown ? 0 : VLCStyle.dp(24, VLCStyle.scale)
+            Behavior on x {
+                NumberAnimation { duration: VLCStyle.duration_short; easing.type: Easing.InOutSine }
+            }
+        }
+    }
+
+    SidePanelLoader {
         id: playlistpopup
 
         anchors {
-            // NOTE: When the controls are pinned we display the playqueue under the topBar.
-            top: (rootPlayer._controlsUnderVideo) ? topBar.bottom
-                                                  : parent.top
-
+            top: parent.top
             right: parent.right
-            bottom: parent.bottom
+            bottom: controlBar.visible ? controlBar.top : parent.bottom
 
-            bottomMargin: parent.height - rootPlayer.positionSliderY
+            topMargin: (topBar.visible ? topBar.reservedHeight : 0) + VLCStyle.dp(20, VLCStyle.scale)
+            rightMargin: VLCStyle.applicationHorizontalMargin + VLCStyle.dp(20, VLCStyle.scale)
+            bottomMargin: VLCStyle.dp(20, VLCStyle.scale)
         }
-
-        focus: false
 
         active: MainCtx.playqueuePanel.docked
+        shown: playlistVisibility.isPlaylistVisible
 
-        //initial state value is "", using a binding avoid animation on startup
-        Binding on state {
-            when: playlistVisibility.started
-            value: (status === Loader.Ready && playlistVisibility.isPlaylistVisible) ? "expanded" : "retracted"
-        }
-
-        Component.onCompleted: {
-            Qt.callLater(() => { playlistTransition.enabled = true; })
-        }
-
-        states: [
-            State {
-                name: "expanded"
-                PropertyChanges {
-                    target: playlistpopup
-                    width: playlistpopup.implicitWidth
-                    visible: true
-                }
-           }, State {
-                name: "retracted"
-                PropertyChanges {
-                    target: playlistpopup
-                    width: 0
-                    visible: false
-                }
-           }
-        ]
-
-        transitions: Transition {
-            id: playlistTransition
-            enabled: false
-
-            from: "retracted"; to: "expanded";
-            reversible: true
-
-            SequentialAnimation {
-                PropertyAction { property: "visible" }
-
-                NumberAnimation {
-                    property: "width"
-                    duration: VLCStyle.duration_short
-                    easing.type: Easing.InOutSine
-                }
-            }
-        }
-
-        sourceComponent: PlaylistPane {
+        sourceComponent: PlayerListsPanel {
             id: playlistView
 
-            property real maximumWidth: (rootPlayer.width + playlistView.rightPadding) / 2
-
-            implicitWidth: Helpers.clamp(MainCtx.playqueuePanel.width
-                                 , playlistView.minimumWidth
-                                 , playlistView.maximumWidth)
-            height: playlistpopup.height
-
-            useAcrylic: false
             focus: true
-
-            wheelEnabled: true
-
-            rightPadding: VLCStyle.applicationHorizontalMargin
-            topPadding:  {
-                if (rootPlayer._controlsUnderVideo)
-                    return VLCStyle.margin_normal
-                else
-                    // NOTE: We increase the padding accordingly to avoid overlapping the TopBar.
-                    return topBar.reservedHeight
-            }
-            bottomPadding: 0
-
-            background: Rectangle {
-                color: windowTheme.bg.primary.alpha(0.8)
-            }
-
-            view.fadingEdge.pixelAlignedForDPR: !controlBar.visible
 
             Navigation.parentItem: rootPlayer
             Navigation.upItem: topBar
             Navigation.downItem: Player.isInteractive ? toggleControlBarButton : controlBar
             Navigation.leftAction: closePlaylist
-            Navigation.cancelAction: closePlaylist
+
+            onCloseRequested: closePlaylist()
 
             function closePlaylist() {
                 playlistVisibility.togglePlaylistVisibility()
@@ -1137,51 +1090,68 @@ FocusScope {
                 else
                     controlBar.forceActiveFocus()
             }
+        }
+    }
 
+    SidePanelLoader {
+        id: settingsPanel
 
-            Widgets.HorizontalResizeHandle {
-                id: resizeHandle
+        anchors {
+            top: parent.top
+            right: parent.right
+            bottom: controlBar.visible ? controlBar.top : parent.bottom
 
-                property bool _inhibitMainCtxUpdate: false
+            topMargin: (topBar.visible ? topBar.reservedHeight : 0) + VLCStyle.dp(20, VLCStyle.scale)
+            rightMargin: VLCStyle.applicationHorizontalMargin + VLCStyle.dp(20, VLCStyle.scale)
+            bottomMargin: VLCStyle.dp(20, VLCStyle.scale)
+        }
 
-                parent: playlistView
+        active: shown || status === Loader.Ready
+        shown: PlayerPanelState.settingsVisible
 
-                anchors {
-                    top: parent.top
-                    bottom: parent.bottom
-                    left: parent.left
-                }
+        sourceComponent: PlayerSettingsPanel {
+            focus: true
 
-                atRight: false
-                currentWidth: playlistpopup.width
+            Navigation.parentItem: rootPlayer
+            Navigation.upItem: topBar
+            Navigation.downItem: controlBar
 
-                maximumWidth: playlistView.maximumWidth
-                minimumWidth: playlistView.minimumWidth
-
-                onRequestedWidthChanged: {
-                    if (!_inhibitMainCtxUpdate)
-                        MainCtx.playqueuePanel.width = requestedWidth
-                }
-
-                Component.onCompleted:  _updateFromMainCtx()
-
-                function _updateFromMainCtx() {
-                    if (requestedWidth === MainCtx.playqueuePanel.width)
-                        return
-
-                    _inhibitMainCtxUpdate = true
-                    requestedWidth = MainCtx.playqueuePanel.width
-                    _inhibitMainCtxUpdate = false
-                }
-
-                Connections {
-                    target: MainCtx.playqueuePanel
-
-                    function onWidthChanged() {
-                        resizeHandle._updateFromMainCtx()
-                    }
-                }
+            onCloseRequested: {
+                PlayerPanelState.settingsVisible = false
+                controlBar.forceActiveFocus()
             }
+        }
+
+        onShownChanged: {
+            if (shown && item)
+                item.forceActiveFocus()
+        }
+    }
+
+    // Ask for the seek bar data shown by the timeline control: the audio
+    // level for audio only media, the subtitle lines for video when enabled.
+    Binding {
+        target: MediaTimeline
+        property: "waveformRequested"
+        value: controlBar.inlineTimeline && Player.isStarted && Player.videoTracks.count === 0
+    }
+
+    Binding {
+        target: MediaTimeline
+        property: "subtitlesRequested"
+        value: controlBar.inlineTimeline && Player.isStarted && Player.videoTracks.count > 0
+               && MainCtx.seekBarSubtitleTimeline
+    }
+
+    // Keep the controls visible while a side panel is open.
+    readonly property bool _sidePanelOpen: playlistVisibility.isPlaylistVisible || PlayerPanelState.settingsVisible
+    on_SidePanelOpenChanged: lockUnlockAutoHide(_sidePanelOpen)
+
+    Connections {
+        target: MainCtx.playqueuePanel
+        function onVisibleChanged() {
+            if (MainCtx.playqueuePanel.visible)
+                PlayerPanelState.settingsVisible = false
         }
     }
 
@@ -1294,7 +1264,8 @@ FocusScope {
 
         rightPadding: VLCStyle.applicationHorizontalMargin
         leftPadding: VLCStyle.applicationHorizontalMargin
-        bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_xsmall
+        bottomPadding: VLCStyle.applicationVerticalMargin
+                       + (inlineTimeline ? VLCStyle.dp(11, VLCStyle.scale) : VLCStyle.margin_xsmall)
 
         textPosition: (MainCtx.pinVideoControls)
                       ? ControlBar.TimeTextPosition.LeftRightSlider
@@ -1336,10 +1307,14 @@ FocusScope {
         background: Rectangle {
             id: controlBarBackground
 
-            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls || !rootPlayer.displayFadeRectangles
+            // The single row control bar always has a background, also over the video.
+            visible: controlBar.inlineTimeline || !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls
+                     || !rootPlayer.displayFadeRectangles
 
             opacity: {
-                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
+                if (controlBar.inlineTimeline && MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls) {
+                    return 0.93
+                } else if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
                     return 0.6
                 } else if ((Window.visibility === Window.FullScreen) && MainCtx.hasEmbededVideo) {
                     return MainCtx.pinOpacity
@@ -1351,6 +1326,16 @@ FocusScope {
             }
 
             color: windowTheme.bg.primary
+
+            Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+
+                visible: controlBar.inlineTimeline
+                height: VLCStyle.border
+                color: windowTheme.border
+            }
         }
 
         FadeControllerStateGroup {

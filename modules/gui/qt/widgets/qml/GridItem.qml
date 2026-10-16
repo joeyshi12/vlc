@@ -61,6 +61,9 @@ T.ItemDelegate {
     property alias title: titleLabel.text
     property alias subtitle: subtitleTxt.text
     property alias subtitleVisible: subtitleTxt.visible
+
+    // Shows the title dimmer, for the items that were already played
+    property bool dimTitle: false
     property alias playCoverShowPlay: picture.playCoverShowPlay
     property alias implicitPlayCoverShowPlay: picture.implicitPlayCoverShowPlay
     property alias playIconSize: picture.playIconSize
@@ -357,6 +360,9 @@ T.ItemDelegate {
                 id: titleLabel
 
                 height: implicitHeight
+                font.weight: Font.Normal
+                font.pixelSize: VLCStyle.fontSize_large
+                opacity: (root.dimTitle && !root.selected) ? 0.55 : 1.0
                 color: root.selected
                     ? theme.fg.highlight
                     : theme.fg.primary

@@ -56,6 +56,11 @@ FocusScope {
 
     property bool _showMiniPlayer: false
 
+    // The small player is shown over the library while a video is playing
+    // in it, and for the audio files that are playing.
+    readonly property bool _showPip: (_showMiniPlayer && MainCtx.hasEmbededVideo)
+                                     || (Player.isStarted && !Player.hasVideoOutput)
+
     property bool _showCSD: MainCtx.clientSideDecoration
         && !(MainCtx.intfMainWindow.visibility === Window.FullScreen)
 
@@ -119,6 +124,12 @@ FocusScope {
         }, {
             name: "network",
             url: "qrc:///qt/qml/VLC/Network/BrowseDisplay.qml"
+        }, {
+            name: "playlists",
+            url: "qrc:///qt/qml/VLC/MediaLibrary/VideoPlaylistsDisplay.qml"
+        }, {
+            name: "recent",
+            url: "qrc:///qt/qml/VLC/MediaLibrary/RecentDisplay.qml"
         }, {
             name: "discover",
             url: "qrc:///qt/qml/VLC/Network/DiscoverDisplay.qml"
@@ -470,7 +481,8 @@ FocusScope {
 
                     z: 99
                     color: sidebar.background.color
-                    visible: sidebar.visible && (stackViewTopLeftRadiusRectangle.topLeftRadius !== undefined)
+                    // The sidebar floats with a gap, so the page has no rounded corner.
+                    visible: false
 
                     anchors.left: stackView.left
                     anchors.leftMargin: -1
@@ -564,6 +576,7 @@ FocusScope {
             width: VLCStyle.isScreenReallySmall ? 0.0 : collapsedWidth
 
             property real collapsedWidth: VLCStyle.icon_normal + VLCStyle.margin_small + VLCStyle.margin_xsmall + VLCStyle.applicationHorizontalMargin
+                                          + 2 * sidebar.panelGap
 
             delegateShowText: (state === "expanded")
 
@@ -573,10 +586,11 @@ FocusScope {
 
             property int maximumWidth: Math.max(minimumWidth, (g_mainDisplay.width + sidebarResizeHandle.width) / 3)
 
-            topPadding: 0
-            leftPadding: 0
-            rightPadding: sidebarResizeHandle.visible ? sidebarResizeHandle.visualBorder.width : 0.0
-            bottomPadding: VLCStyle.applicationVerticalMargin + VLCStyle.margin_small
+            // 8 px between the panel edge and the first button (a row is 6 px higher than its button)
+            topPadding: sidebar.panelGap + VLCStyle.dp(5, VLCStyle.scale)
+            leftPadding: sidebar.panelGap
+            rightPadding: sidebar.panelGap + (sidebarResizeHandle.visible ? sidebarResizeHandle.visualBorder.width : 0.0)
+            bottomPadding: sidebar.panelGap + VLCStyle.applicationVerticalMargin + VLCStyle.margin_small
 
             safeAreaLeftMargin: VLCStyle.applicationHorizontalMargin
 
@@ -604,6 +618,12 @@ FocusScope {
                 console.assert(modelUri)
 
                 console.assert(item)
+
+                if (modelUri[0] === "add") {
+                    DialogsProvider.simpleOpenDialog()
+                    return
+                }
+
                 if ((sidebar.state !== 'expanded') && item.expandable) {
                     // TODO: Investigate opening the menu on hover, if
                     //       we switch to `Popup.Item` type of menus.
@@ -673,7 +693,7 @@ FocusScope {
                 atRight: true
 
                 resizeHandle.visible: (sidebar.state === "expanded") && !VLCStyle.isScreenSmall
-                visualBorder.visible: !topLeftCornerBackground.visible
+                visualBorder.visible: false
 
                 minimumWidth: sidebar.minimumWidth
                 maximumWidth: sidebar.maximumWidth
@@ -983,22 +1003,31 @@ FocusScope {
             id: playerPip
             anchors {
                 bottom: loaderUpdatePane.top
-                left: parent.left
+                right: parent.right
                 bottomMargin: VLCStyle.margin_normal
-                leftMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
+                // Keep the small player over the content, to the left of the
+                // docked queue when that panel is open.
+                rightMargin: VLCStyle.margin_normal + VLCStyle.applicationHorizontalMargin
+                             + (playlistLoader.shown ? playlistLoader.width : 0)
             }
 
-            width: VLCStyle.dp(320, VLCStyle.scale)
-            height: VLCStyle.dp(180, VLCStyle.scale)
             z: 4
-            visible: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
-            enabled: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
+            visible: g_mainDisplay._showPip
+            enabled: g_mainDisplay._showPip
+            queueVisible: pannelVisiblity.showPlayqueue
+
+            onQueueToggled: {
+                // The queue is the docked panel at the right, not part of the
+                // floating small player.
+                MainCtx.playqueuePanel.docked = true
+                pannelVisiblity.togglePlayqueueVisibility()
+            }
 
             Binding on visible {
                 id: visibleBinding
                 when: false
                 delayed: true
-                value: g_mainDisplay._showMiniPlayer && MainCtx.hasEmbededVideo
+                value: g_mainDisplay._showPip
             }
 
             Component.onCompleted: {
@@ -1007,16 +1036,25 @@ FocusScope {
 
             dragXMin: VLCStyle.applicationHorizontalMargin
             dragXMax: g_mainDisplay.width - playerPip.width - VLCStyle.applicationHorizontalMargin
+                      - (playlistLoader.shown ? playlistLoader.width : 0)
             dragYMin: localTopbar.y + localTopbar.height
             dragYMax: loaderUpdatePane.y - playerPip.height
 
-            //keep the player visible on resize
+            // Keep the player visible on resize and when the right queue
+            // changes width.
+            function clampX() {
+                if (playerPip.x > playerPip.dragXMax)
+                    playerPip.x = playerPip.dragXMax
+            }
+
+            Connections {
+                target: playlistLoader
+                function onWidthChanged() { playerPip.clampX() }
+            }
+
             Connections {
                 target: g_mainDisplay
-                function onWidthChanged() {
-                    if (playerPip.x > playerPip.dragXMax)
-                        playerPip.x = playerPip.dragXMax
-                }
+                function onWidthChanged() { playerPip.clampX() }
                 function onHeightChanged() {
                     if (playerPip.y > playerPip.dragYMax)
                         playerPip.y = playerPip.dragYMax
