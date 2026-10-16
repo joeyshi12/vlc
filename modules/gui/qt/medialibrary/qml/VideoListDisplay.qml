@@ -41,6 +41,9 @@ Widgets.TableViewExt {
     property real coverWidth: VLCStyle.listAlbumCover_width
     property real coverRadius: VLCStyle.listAlbumCover_radius
 
+    // The Figma list begins with media rows directly below the page header.
+    showTableHeader: false
+
     //---------------------------------------------------------------------------------------------
     // Private
 
