@@ -63,4 +63,10 @@ T.Button {
         implicitWidth: 10
         implicitHeight: 10
     }
+
+    // Show the hand cursor over clickable controls
+    HoverHandler {
+        enabled: control.enabled
+        cursorShape: Qt.PointingHandCursor
+    }
 }

@@ -160,6 +160,7 @@ T.Control {
         anchors.fill: parent
 
         hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
 
         readonly property bool cursorInside: containsMouse
 

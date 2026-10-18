@@ -113,4 +113,10 @@ T.Button {
             font.weight: (highlighted) ? Font.DemiBold : Font.Normal
         }
     }
+
+    // Show the hand cursor over clickable controls
+    HoverHandler {
+        enabled: button.enabled
+        cursorShape: Qt.PointingHandCursor
+    }
 }

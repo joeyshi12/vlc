@@ -181,6 +181,7 @@ PanelCard {
                     font.pixelSize: VLCStyle.fontSize_normal
 
                     TapHandler { onTapped: Player.rate = (Player.rate < 0 ? -modelData : modelData) }
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
             }
         }
