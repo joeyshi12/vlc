@@ -70,7 +70,7 @@ QtObject {
                     implicitWidth: VLCStyle.dp(320, VLCStyle.scale)
                     implicitHeight: VLCStyle.dp(36, VLCStyle.scale)
                     radius: VLCStyle.dp(6, VLCStyle.scale)
-                    color: pal.dark ? "#000000" : pal.box
+                    color: pal.field
 
                     RowLayout {
                         anchors.fill: parent

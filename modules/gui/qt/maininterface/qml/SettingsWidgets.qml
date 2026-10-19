@@ -30,21 +30,52 @@ import VLC.Util
 QtObject {
 
     // Colours of the design, for the dark and the light theme
+    // Colours of the Settings and Shortcuts dialogs. The Light and Dark
+    // themes use the colours of the design; the System theme takes them
+    // from the system palette, like the rest of the interface.
     component Pal : QtObject {
         readonly property bool dark: VLCStyle.palette.isDark
+        readonly property bool system: MainCtx.colorScheme.scheme === ColorSchemeModel.System
 
-        readonly property color window: dark ? "#0E0E0E" : "#E7E7E7"
-        readonly property color header: dark ? "#000000" : "#DEDEDE"
-        readonly property color panel: dark ? "#191919" : "#D5D5D5"
-        readonly property color selected: dark ? "#222222" : "#E7E7E7"
-        readonly property color box: dark ? "#090909" : "#DEDEDE"
-        readonly property color boxInner: dark ? "#191919" : "#D5D5D5"
-        readonly property color groupText: "#6B6B6B"
-        readonly property color itemText: dark ? "#EAEAEA" : "#2E2E2E"
-        readonly property color heading: dark ? "#C6C6C6" : "#2E2E2E"
-        readonly property color label: dark ? "#8F8F8F" : "#3C3C3C"
-        readonly property color title: dark ? "#969696" : "#3C3C3C"
-        readonly property color dim: "#6B6B6B"
+        readonly property ColorContext _view: ColorContext {
+            palette: VLCStyle.palette
+            colorSet: ColorContext.View
+        }
+        readonly property ColorContext _window: ColorContext {
+            palette: VLCStyle.palette
+            colorSet: ColorContext.Window
+        }
+        readonly property ColorContext _field: ColorContext {
+            palette: VLCStyle.palette
+            colorSet: ColorContext.TextField
+        }
+
+        // A tint of the text colour over a background, for selected and
+        // hovered surfaces in the System theme
+        function _tint(bg, fg, alpha) {
+            return Qt.tint(bg, Qt.rgba(fg.r, fg.g, fg.b, alpha))
+        }
+
+        readonly property color window: system ? _view.bg.primary : (dark ? "#0E0E0E" : "#E7E7E7")
+        readonly property color header: system ? _window.bg.primary : (dark ? "#000000" : "#DEDEDE")
+        readonly property color panel: system ? _window.bg.primary : (dark ? "#191919" : "#D5D5D5")
+        readonly property color selected: system ? _tint(_window.bg.primary, _window.fg.primary, 0.10)
+                                                 : (dark ? "#222222" : "#E7E7E7")
+        readonly property color hovered: system ? _tint(_window.bg.primary, _window.fg.primary, 0.06)
+                                                : (dark ? "#2A2A2A" : "#E0E0E0")
+        readonly property color box: system ? _field.bg.primary : (dark ? "#090909" : "#DEDEDE")
+        // Background of text fields and switches in rows
+        readonly property color field: system ? _field.bg.primary : (dark ? "#000000" : box)
+        readonly property color boxInner: system ? _window.bg.primary : (dark ? "#191919" : "#D5D5D5")
+        readonly property color border: system ? _window.border : (dark ? "#222222" : "#ACACAC")
+        readonly property color groupText: system ? _view.fg.secondary : "#6B6B6B"
+        readonly property color itemText: system ? _view.fg.primary : (dark ? "#EAEAEA" : "#2E2E2E")
+        readonly property color heading: system ? _view.fg.primary : (dark ? "#C6C6C6" : "#2E2E2E")
+        readonly property color label: system ? _view.fg.secondary : (dark ? "#8F8F8F" : "#3C3C3C")
+        readonly property color title: system ? _view.fg.secondary : (dark ? "#969696" : "#3C3C3C")
+        readonly property color dim: system ? _view.fg.secondary : "#6B6B6B"
+        readonly property color switchOff: system ? _tint(_field.bg.primary, _view.fg.primary, 0.3)
+                                                  : (dark ? "#404040" : "#B3B3B3")
         readonly property color tick: dark ? "#1A1611" : "#C6AB89"
 
         // Background of the selected parts, from the accent colour
@@ -283,7 +314,7 @@ QtObject {
         indicator: Rectangle {
             anchors.fill: parent
             radius: VLCStyle.dp(6, VLCStyle.scale)
-            color: control.pal.dark ? "#000000" : control.pal.box
+            color: control.pal.field
             border.width: control.visualFocus ? VLCStyle.focus_border : 0
             border.color: switchTheme.visualFocus
             opacity: control.enabled ? 1 : 0.5
@@ -313,7 +344,7 @@ QtObject {
                 width: parent.height - 2 * control.inset
                 height: width
                 radius: VLCStyle.dp(3, VLCStyle.scale)
-                color: control.checked ? Qt.darker(switchTheme.bg.primary, 1.23) : (control.pal.dark ? "#404040" : "#B3B3B3")
+                color: control.checked ? Qt.darker(switchTheme.bg.primary, 1.23) : control.pal.switchOff
 
                 Behavior on x {
                     NumberAnimation { duration: VLCStyle.duration_veryShort; easing.type: Easing.InOutSine }
@@ -409,7 +440,7 @@ QtObject {
 
         background: Rectangle {
             radius: VLCStyle.dp(6, VLCStyle.scale)
-            color: control.pal.dark ? "#000000" : control.pal.box
+            color: control.pal.field
             border.width: control.visualFocus ? VLCStyle.focus_border : 0
             border.color: comboTheme.visualFocus
             opacity: control.enabled ? 1 : 0.5

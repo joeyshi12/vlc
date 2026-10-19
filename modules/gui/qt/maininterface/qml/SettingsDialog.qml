@@ -112,7 +112,7 @@ T.Popup {
         color: root.pal.window
 
         border.width: VLCStyle.dp(1, VLCStyle.scale)
-        border.color: VLCStyle.palette.isDark ? "#222222" : "#ACACAC"
+        border.color: root.pal.border
     }
 
     contentItem: ColumnLayout {
@@ -268,7 +268,7 @@ T.Popup {
                                             // the current category.
                                             color: item.current ? root.pal.selected
                                                                 : (itemHover.hovered
-                                                                   ? (VLCStyle.palette.isDark ? "#2A2A2A" : "#E0E0E0")
+                                                                   ? root.pal.hovered
                                                                    : "transparent")
                                             border.width: item.visualFocus ? VLCStyle.focus_border : 0
                                             border.color: theme.visualFocus
