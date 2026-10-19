@@ -272,8 +272,10 @@ T.Control {
         ColumnLayout {
             id: textInfoColumn
 
+            // Centred in the row, so a title without a second line lines up
+            // with the artwork and the duration like the other rows
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignVCenter
             Layout.leftMargin: VLCStyle.margin_large
             spacing: VLCStyle.margin_xxxsmall
 
@@ -294,6 +296,8 @@ T.Control {
 
                 text: delegate.artist || (delegate.title.length === 0 ? delegate.url : "")
                 color: theme.fg.primary
+
+                visible: text.length > 0
             }
         }
 
