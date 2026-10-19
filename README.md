@@ -57,7 +57,11 @@ installs it to `/opt/vlc`, with `/usr/bin/vlc`, a desktop entry and icons:
 cd extras/package/arch && makepkg -si
 ```
 
-The package conflicts with Arch's `vlc` package.
+It builds the checkout it is in as it is, including uncommitted changes, and
+the version ends in `.dirty` when there are any. To build from GitHub instead,
+set `VLC_GIT_URL=https://github.com/joeyshi12/vlc.git`, and `VLC_GIT_BRANCH`
+for a branch other than master. The package conflicts with Arch's `vlc`
+package.
 
 ### Other Linux distributions
 

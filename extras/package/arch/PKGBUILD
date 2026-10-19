@@ -6,13 +6,16 @@
 #
 #   cd extras/package/arch && makepkg -si
 #
-# This builds the master branch on GitHub. To build a local checkout or
-# another branch instead:
+# This builds the source tree the PKGBUILD is in as it is, uncommitted
+# changes included; the version ends in .dirty when there are any. To build
+# a git branch instead, e.g. from GitHub when the PKGBUILD is used on its
+# own:
 #
-#   VLC_GIT_URL="file://$(git rev-parse --show-toplevel)" VLC_GIT_BRANCH=my-branch makepkg -si
+#   VLC_GIT_URL=https://github.com/joeyshi12/vlc.git makepkg -si
+#   VLC_GIT_URL=https://github.com/joeyshi12/vlc.git VLC_GIT_BRANCH=my-branch makepkg -si
 
 pkgname=vlc-joeyshi12-git
-pkgver=4.0.0.r112713.g6fb9b33920
+pkgver=4.0.0.r112723.gc05ff186dc
 pkgrel=1
 pkgdesc="VLC 4 media player with a redesigned interface, built from joeyshi12/vlc"
 arch=('x86_64')
@@ -50,24 +53,49 @@ conflicts=('vlc' 'vlc-joeyshi12')
 options=('!lto' '!debug')
 install=$pkgname.install
 
-_vlc_url=${VLC_GIT_URL:-https://github.com/joeyshi12/vlc.git}
-_vlc_branch=${VLC_GIT_BRANCH:-master}
+# Without VLC_GIT_URL, the local tree is linked into $srcdir in prepare()
+# rather than cloned, so the build sees uncommitted changes. Meson builds
+# out of tree, so nothing is written to it.
+_vlc_tree=$(realpath "$startdir/../../..")
+_vlc_url=${VLC_GIT_URL:-}
+_vlc_fragment=${VLC_GIT_BRANCH:+#branch=$VLC_GIT_BRANCH}
 # VLC 4 needs a medialibrary from git, and medialibrary's API moves with
 # libvlcpp, so both are pinned to commits that build together with this tree
 _medialibrary_commit=5528c2faabfe04ce96e7b26d2dcf6ce742568c79
 _libvlcpp_commit=3095992b779ef7ee4487f39f936f8ab3750cb23a
-source=("vlc::git+${_vlc_url}#branch=${_vlc_branch}"
-        "medialibrary::git+https://code.videolan.org/videolan/medialibrary.git#commit=${_medialibrary_commit}"
+source=("medialibrary::git+https://code.videolan.org/videolan/medialibrary.git#commit=${_medialibrary_commit}"
         "libvlcpp::git+https://code.videolan.org/videolan/libvlcpp.git#commit=${_libvlcpp_commit}")
-sha256sums=('SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP')
+if [[ -n $_vlc_url ]]; then
+  source=("vlc::git+${_vlc_url}${_vlc_fragment}" "${source[@]}")
+  sha256sums=('SKIP' "${sha256sums[@]}")
+fi
 
 _prefix=/opt/vlc
 
+# The VLC sources: the git clone, or the local tree, which pkgver() reads
+# directly because it can run before prepare() links it
+_vlc_dir() {
+  if [[ -n $_vlc_url ]]; then echo "$srcdir/vlc"; else echo "$_vlc_tree"; fi
+}
+
 pkgver() {
-  cd vlc
-  local base
+  cd "$(_vlc_dir)"
+  local base dirty=
   base=$(sed -n "s/^ *version: '\([0-9.]*\).*/\1/p" meson.build | head -n1)
-  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short=10 HEAD)"
+  if [[ -z $_vlc_url && -n $(git status --porcelain) ]]; then
+    dirty=.dirty
+  fi
+  printf '%s.r%s.g%s%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short=10 HEAD)" "$dirty"
+}
+
+prepare() {
+  if [[ -z $_vlc_url ]]; then
+    # Replace a clone left by an earlier build; rm on the link itself never
+    # follows it into the tree
+    rm -rf "$srcdir/vlc"
+    ln -s "$_vlc_tree" "$srcdir/vlc"
+  fi
 }
 
 # libvlc, libvlcpp and medialibrary are built in turn and installed to a
