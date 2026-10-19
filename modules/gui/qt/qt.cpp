@@ -409,7 +409,10 @@ vlc_module_begin ()
                           nullptr )
         change_volatile()
 
-    add_bool( "qt-video-autoresize", true, KEEPSIZE_TEXT,
+    /* Off by default: tiling Wayland compositors decide the window size, and
+     * Qt draws the interface at the requested size until the compositor sends
+     * the real one, so the video only fills part of the window. */
+    add_bool( "qt-video-autoresize", false, KEEPSIZE_TEXT,
               KEEPSIZE_LONGTEXT )
     add_bool( "qt-name-in-title", true, TITLE_TEXT,
               TITLE_LONGTEXT )
