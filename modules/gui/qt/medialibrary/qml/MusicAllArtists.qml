@@ -208,6 +208,9 @@ MainViewLoader {
                 }
             }]
 
+            // The sort menu in the page header replaces the column labels
+            showTableHeader: false
+
             selectionModel: root.selectionModel
             model: artistModel
             focus: true

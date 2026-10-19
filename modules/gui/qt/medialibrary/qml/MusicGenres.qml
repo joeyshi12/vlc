@@ -261,6 +261,9 @@ MainViewLoader {
                 }
             }]
 
+            // The sort menu in the page header replaces the column labels
+            showTableHeader: false
+
             model: genreModel
 
             sortModel: (_availableRowWidth < VLCStyle.colWidth(4)) ? _modelSmall
