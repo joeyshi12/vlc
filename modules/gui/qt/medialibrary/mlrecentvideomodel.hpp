@@ -34,6 +34,13 @@ public:
 
     virtual ~MLRecentVideoModel() = default;
 
+public: // Interface
+    // Remove the given videos from the history, which also resets their progress
+    Q_INVOKABLE void removeFromHistory(const QModelIndexList & indexes);
+
+    // Remove every video from the history. Audio and stream history are kept.
+    Q_INVOKABLE void clearVideoHistory();
+
 protected: // MLBaseModel implementation
     std::unique_ptr<MLListCacheLoader> createMLLoader() const override;
 

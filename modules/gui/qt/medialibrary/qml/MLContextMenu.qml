@@ -96,6 +96,14 @@ NativeMenu {
             "action": markUnseen,
             "visible": _showUnseen
         }, {
+            "text": qsTr("Remove from Continue Watching"),
+            "action": removeFromHistory,
+            "visible": _isVideoHistory
+        }, {
+            "text": qsTr("Clear Continue Watching"),
+            "action": clearVideoHistory,
+            "visible": _isVideoHistory
+        }, {
             "text": qsTr("Open Containing Folder"),
             "action": openContainingFolder,
             "visible": _openContainingFolder
@@ -184,6 +192,15 @@ NativeMenu {
         model.setItemPlayed(indexes[0], false)
     }
 
+    function removeFromHistory(dataList, options, indexes) {
+        model.removeFromHistory(indexes)
+    }
+
+    function clearVideoHistory(dataList, options, indexes) {
+        if (DialogsProvider.questionDialog(qsTr("Remove all videos from Continue Watching? Their playback progress will be lost.")))
+            model.clearVideoHistory()
+    }
+
     function openContainingFolder(dataList, options, indexes) {
         const parentDir = model.getParentURL(indexes[0]);
 
@@ -234,6 +251,10 @@ NativeMenu {
 
     function _showUnseen(dataList, options, indexes) {
         return _checkRole(dataList, "isNew", false)
+    }
+
+    function _isVideoHistory(dataList, options, indexes) {
+        return (root.model instanceof MLRecentVideoModel)
     }
 
     function _openContainingFolder(dataList, options, indexes) {

@@ -32,6 +32,47 @@ MLRecentVideoModel::createMLLoader() const
     return std::make_unique<MLListCacheLoader>(m_mediaLib, std::make_shared<MLRecentVideoModel::Loader>(*this));
 }
 
+// Interface
+
+void MLRecentVideoModel::removeFromHistory(const QModelIndexList & indexes)
+{
+    assert(m_mediaLib);
+
+    std::vector<int64_t> ids;
+    for (const QModelIndex & index : indexes)
+    {
+        const MLItem * video = item(index.row());
+        if (video)
+            ids.push_back(video->getId().id);
+    }
+
+    if (ids.empty())
+        return;
+
+    // Marking a media as not played removes it from the history; the
+    // resulting VLC_ML_EVENT_HISTORY_CHANGED reloads the model
+    m_mediaLib->runOnMLThread(this, [ids = std::move(ids)] (vlc_medialibrary_t * ml)
+    {
+        for (int64_t id : ids)
+            vlc_ml_media_set_played(ml, id, false);
+    });
+}
+
+void MLRecentVideoModel::clearVideoHistory()
+{
+    assert(m_mediaLib);
+
+    m_mediaLib->runOnMLThread(this, [] (vlc_medialibrary_t * ml)
+    {
+        ml_unique_ptr<vlc_ml_media_list_t> list { vlc_ml_list_video_history(ml, nullptr) };
+        if (list == nullptr)
+            return;
+
+        for (const vlc_ml_media_t & media : ml_range_iterate<vlc_ml_media_t>(list))
+            vlc_ml_media_set_played(ml, media.i_id, false);
+    });
+}
+
 // Private MLVideoModel reimplementation
 
 void MLRecentVideoModel::onVlcMlEvent(const MLEvent & event) /* override */
