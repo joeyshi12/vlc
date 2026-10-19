@@ -43,7 +43,8 @@ depends=(
 )
 makedepends=('git' 'meson' 'ninja' 'bison' 'flex' 'gettext' 'qt6-shadertools'
              'qt6-tools' 'wayland-protocols' 'xorgproto' 'xxhash')
-optdepends=('libdvdcss: play encrypted DVDs')
+optdepends=('libdvdcss: play encrypted DVDs'
+            'yt-dlp: play YouTube and other web videos')
 provides=('vlc-joeyshi12')
 conflicts=('vlc' 'vlc-joeyshi12')
 options=('!lto' '!debug')
