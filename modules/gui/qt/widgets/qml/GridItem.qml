@@ -244,6 +244,12 @@ T.ItemDelegate {
             }
         }
 
+        // Show the hand cursor over clickable items
+        HoverHandler {
+            enabled: root.enabled
+            cursorShape: Qt.PointingHandCursor
+        }
+
         DelegateTouchTapHandler {
             delegate: root
 

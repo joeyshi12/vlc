@@ -191,6 +191,12 @@ T.Control {
             }
         }
 
+        // Show the hand cursor over clickable rows
+        HoverHandler {
+            enabled: delegate.enabled
+            cursorShape: Qt.PointingHandCursor
+        }
+
         DelegateTouchTapHandler {
             delegate: delegate
 
