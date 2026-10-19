@@ -1,0 +1,8 @@
+# makepkg output and the git sources it downloads
+/src/
+/pkg/
+/vlc/
+/medialibrary/
+/libvlcpp/
+*.pkg.tar.*
+*.log
