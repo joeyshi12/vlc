@@ -271,12 +271,30 @@ static int updatePalette(vlc_qt_theme_provider_t* obj)
     //tool button
     {
         auto CS = VQTC_SET_TOOL_BUTTON;
-        setQtColorSetBg(obj, CS, VQTC_NAME_PRIMARY, QPalette::Button);
         setQtColorSetFg(obj, CS, VQTC_NAME_PRIMARY, QPalette::ButtonText);
 
         setQtColor(obj, CS, VQTC_SECTION_FG, VQTC_NAME_SECONDARY, VQTC_STATE_NORMAL, secondaryTextButton);
 
-        setQtColorSetBorder(obj, CS, QPalette::Button, QPalette::ButtonText, 0.8);
+        // Tool buttons are drawn as plain icons, as in the built-in day and
+        // night palettes: no background or border until they are hovered,
+        // focused or pressed, which tint them with the button text colour
+        {
+            const QColor text = palette.color(QPalette::Normal, QPalette::ButtonText);
+            QColor hovered = text;
+            hovered.setAlphaF(0.08);
+            QColor pressed = text;
+            pressed.setAlphaF(0.16);
+
+            setQtColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_NORMAL, Qt::transparent);
+            setQtColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_DISABLED, Qt::transparent);
+            setQtColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_HOVERED, hovered);
+            setQtColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_FOCUSED, hovered);
+            setQtColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_PRESSED, pressed);
+
+            for (auto state : { VQTC_STATE_NORMAL, VQTC_STATE_DISABLED, VQTC_STATE_HOVERED,
+                                VQTC_STATE_FOCUSED, VQTC_STATE_PRESSED })
+                setQtColor(obj, CS, VQTC_SECTION_DECORATION, VQTC_NAME_BORDER, state, Qt::transparent);
+        }
 
         setQtColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_NEGATIVE, VQTC_STATE_NORMAL, negative);
         setQtColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_NEGATIVE, VQTC_STATE_HOVERED, negativeHover);
