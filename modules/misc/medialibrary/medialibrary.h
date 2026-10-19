@@ -234,6 +234,12 @@ public:
     // TODO Will be exposed once subscriptions are integrated.
     void onSubscriptionsAdded( std::vector<medialibrary::SubscriptionPtr> ) override {}
     void onSubscriptionsModified( std::set<int64_t> ) override {}
+    void onSubscriptionArtworkReady( int64_t, bool ) override {}
+
+    // Media caching is not used by VLC yet
+    void onMediaCacheStarted( int64_t, medialibrary::CacheOperation ) override {}
+    void onMediaCacheCompleted( int64_t, medialibrary::CacheOperation,
+                                medialibrary::CacheStatus ) override {}
     void onSubscriptionsDeleted( std::set<int64_t> ) override {}
     void onSubscriptionNewMedia( std::set<int64_t> ) override {}
     void onSubscriptionCacheUpdated( int64_t ) override {}

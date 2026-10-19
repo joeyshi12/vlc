@@ -215,6 +215,8 @@ T.Pane {
                     }
                 }
 
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
+
                 HoverHandler {
                     id: mediaRemainingTimeHover
                 }

@@ -125,6 +125,31 @@ struct ytdl_playlist {
     stream_t *source;
 };
 
+/* yt-dlp sets acodec or vcodec to "none" for formats without that stream.
+ * Video-only formats can still have abr set to 0, so the bit rate alone does
+ * not tell whether a format has audio. */
+static bool FormatHasStream(const struct json_object *fmt, const char *codec,
+                            const char *fallback)
+{
+    const char *name = json_get_str(fmt, codec);
+
+    if (name != NULL)
+        return strcmp(name, "none") != 0;
+
+    double v = json_get_num(fmt, fallback);
+    return isgreater(v, 0.);
+}
+
+static bool FormatHasAudio(const struct json_object *fmt)
+{
+    return FormatHasStream(fmt, "acodec", "abr");
+}
+
+static bool FormatHasVideo(const struct json_object *fmt)
+{
+    return FormatHasStream(fmt, "vcodec", "height");
+}
+
 static int CompareFormats(const struct json_object *f_a,
                           const struct json_object *f_b, double pref_height)
 {
@@ -134,12 +159,12 @@ static int CompareFormats(const struct json_object *f_a,
     double abr_b = json_get_num(f_b, "abr");
 
     /* Prefer non-mute formats */
-    if (!isnan(abr_a) != !isnan(abr_b))
-        return isnan(abr_a) ? -1 : +1;
+    if (FormatHasAudio(f_a) != FormatHasAudio(f_b))
+        return FormatHasAudio(f_a) ? +1 : -1;
 
     /* Prefer non-blind formats */
-    if (!isnan(h_a) != !isnan(h_b))
-        return isnan(h_a) ? -1 : +1;
+    if (FormatHasVideo(f_a) != FormatHasVideo(f_b))
+        return FormatHasVideo(f_a) ? +1 : -1;
 
     if (islessequal(h_a, pref_height)) {
         if (!islessequal(h_b, pref_height))
@@ -199,6 +224,49 @@ static const struct json_object *PickFormat(stream_t *s,
      }
 
      return best_fmt;
+}
+
+/* Returns the URL to open for a single video. Sites such as YouTube only
+ * offer audio and video as separate formats, except through an HLS or DASH
+ * manifest that lists both, which the adaptive demux can play. */
+static const char *PickURL(stream_t *s, const struct json_object *entry)
+{
+    const struct json_object *fmt = PickFormat(s, entry);
+
+    if (fmt == NULL)
+        return NULL;
+    if (FormatHasAudio(fmt) && FormatHasVideo(fmt))
+        return json_get_str(fmt, "url");
+
+    const struct json_value *fmts = json_get(entry, "formats");
+    const char *manifest = NULL;
+
+    if (fmts != NULL && fmts->type == JSON_ARRAY) {
+        for (size_t i = 0; i < fmts->array.size; i++) {
+            const struct json_value *v = &fmts->array.entries[i];
+
+            if (v->type != JSON_OBJECT)
+                continue;
+
+            const char *url = json_get_str(&v->object, "manifest_url");
+            if (url == NULL)
+                continue;
+
+            /* HLS master playlists carry the audio renditions with the
+             * video variants, so take one when there is a choice. */
+            const char *proto = json_get_str(&v->object, "protocol");
+            if (proto != NULL && strncmp(proto, "m3u8", 4) == 0)
+                return url;
+            if (manifest == NULL)
+                manifest = url;
+        }
+    }
+
+    if (manifest != NULL)
+        return manifest;
+
+    msg_Warn(s, "no format with both audio and video");
+    return json_get_str(fmt, "url");
 }
 
 static const char *PickArt(const struct json_object *entry)
@@ -430,21 +498,17 @@ static int OpenCommon(vlc_object_t *obj, const char *src_url)
     /* Redirect if there is a single URL, so that we can refresh it every
      * time it is opened.
      */
-    const struct json_object *fmt = PickFormat(s, &sys->json);
+    const char *url = PickURL(s, &sys->json);
     stream_t *demux = NULL;
 
-    if (fmt != NULL) {
-        const char *url = json_get_str(fmt, "url");
+    if (url != NULL) {
+        var_Create(obj, "ytdl", VLC_VAR_BOOL);
+        demux = vlc_demux_NewURL(obj, url, s->out);
 
-        if (url != NULL) {
-            var_Create(obj, "ytdl", VLC_VAR_BOOL);
-            demux = vlc_demux_NewURL(obj, url, s->out);
-
-            if (demux == NULL)
-                msg_Err(s, "cannot open URL: %s", url);
-            else
-                msg_Dbg(s, "redirecting to: %s", url);
-         }
+        if (demux == NULL)
+            msg_Err(s, "cannot open URL: %s", url);
+        else
+            msg_Dbg(s, "redirecting to: %s", url);
     }
 
     if (demux == NULL) {

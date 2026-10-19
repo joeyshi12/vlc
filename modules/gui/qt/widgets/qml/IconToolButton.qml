@@ -120,4 +120,10 @@ T.ToolButton {
 
         font: control.font
     }
+
+    // Show the hand cursor over clickable controls
+    HoverHandler {
+        enabled: control.enabled
+        cursorShape: Qt.PointingHandCursor
+    }
 }

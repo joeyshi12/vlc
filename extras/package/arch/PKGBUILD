@@ -1,0 +1,155 @@
+# Maintainer: Joey Shi <root@joeyshi.xyz>
+#
+# Builds VLC 4 from this repository together with the media library it
+# needs, and installs it to /opt/vlc so it does not clash with Arch's
+# libvlc 3. /usr/bin/vlc, the desktop entry and the icons point there.
+#
+#   cd extras/package/arch && makepkg -si
+#
+# This builds the master branch on GitHub. To build a local checkout or
+# another branch instead:
+#
+#   VLC_GIT_URL="file://$(git rev-parse --show-toplevel)" VLC_GIT_BRANCH=my-branch makepkg -si
+
+pkgname=vlc-joeyshi12-git
+pkgver=4.0.0.r112713.g6fb9b33920
+pkgrel=1
+pkgdesc="VLC 4 media player with a redesigned interface, built from joeyshi12/vlc"
+arch=('x86_64')
+url="https://github.com/joeyshi12/vlc"
+license=('GPL-2.0-or-later' 'LGPL-2.1-or-later')
+# Libraries the binaries and plugins link against, plus qt6-svg, which Qt
+# loads at runtime for the SVG icons
+depends=(
+  'abseil-cpp' 'alsa-lib' 'aom' 'aribb24' 'aribb25' 'avahi'
+  'cairo' 'dav1d' 'dbus' 'faad2' 'ffmpeg' 'flac'
+  'fluidsynth' 'fontconfig' 'freetype2' 'fribidi' 'gdk-pixbuf2' 'glib2'
+  'glibc' 'gnutls' 'gtk3' 'harfbuzz' 'jack' 'kwindowsystem'
+  'libarchive' 'libass' 'libatomic' 'libavc1394' 'libbluray' 'libcaca'
+  'libdc1394' 'libdrm' 'libdvbpsi' 'libdvdnav' 'libdvdread' 'libebml'
+  'libebur128' 'libfdk-aac' 'libgcc' 'libgcrypt' 'libglvnd' 'libgme'
+  'libgoom2' 'libidn' 'libjpeg-turbo' 'libkate' 'libmad' 'libmatroska'
+  'libmicrodns' 'libmodplug' 'libmtp' 'libnfs' 'libogg' 'libpipewire'
+  'libplacebo' 'libpng' 'libpulse' 'libraw1394' 'librist' 'librsvg'
+  'libsamplerate' 'libsecret' 'libshout' 'libsoxr' 'libssh2' 'libstdc++'
+  'libtheora' 'libtiger' 'libupnp' 'libutf8proc' 'libva' 'libvorbis'
+  'libvpl' 'libvpx' 'libx11' 'libxcb' 'libxcursor' 'libxext'
+  'libxinerama' 'libxkbcommon' 'libxml2' 'libxpm' 'lua' 'mesa'
+  'mpg123' 'ncurses' 'opus' 'pcsclite' 'projectm' 'protobuf'
+  'qt6-base' 'qt6-declarative' 'qt6-svg' 'rav1e' 'rnnoise' 'smbclient'
+  'sndio' 'speex' 'speexdsp' 'sqlite' 'srt' 'systemd-libs'
+  'taglib' 'twolame' 'wayland' 'x264' 'x265' 'xcb-util-keysyms'
+  'zlib' 'zvbi'
+)
+makedepends=('git' 'meson' 'ninja' 'bison' 'flex' 'gettext' 'qt6-shadertools'
+             'qt6-tools' 'wayland-protocols' 'xorgproto' 'xxhash')
+optdepends=('libdvdcss: play encrypted DVDs'
+            'yt-dlp: play YouTube and other web videos')
+provides=('vlc-joeyshi12')
+conflicts=('vlc' 'vlc-joeyshi12')
+options=('!lto' '!debug')
+install=$pkgname.install
+
+_vlc_url=${VLC_GIT_URL:-https://github.com/joeyshi12/vlc.git}
+_vlc_branch=${VLC_GIT_BRANCH:-master}
+# VLC 4 needs a medialibrary from git, and medialibrary's API moves with
+# libvlcpp, so both are pinned to commits that build together with this tree
+_medialibrary_commit=5528c2faabfe04ce96e7b26d2dcf6ce742568c79
+_libvlcpp_commit=3095992b779ef7ee4487f39f936f8ab3750cb23a
+source=("vlc::git+${_vlc_url}#branch=${_vlc_branch}"
+        "medialibrary::git+https://code.videolan.org/videolan/medialibrary.git#commit=${_medialibrary_commit}"
+        "libvlcpp::git+https://code.videolan.org/videolan/libvlcpp.git#commit=${_libvlcpp_commit}")
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+
+_prefix=/opt/vlc
+
+pkgver() {
+  cd vlc
+  local base
+  base=$(sed -n "s/^ *version: '\([0-9.]*\).*/\1/p" meson.build | head -n1)
+  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short=10 HEAD)"
+}
+
+# libvlc, libvlcpp and medialibrary are built in turn and installed to a
+# staging directory, so the next one can build against them. The staged
+# pkg-config files are rewritten to point into the staging directory, and
+# their -L flag is dropped in favour of LIBRARY_PATH: meson adds -L
+# directories to the build RPATH and leaves the string in the installed
+# binaries, which would reference $srcdir.
+_stage_pkgconfig() {
+  sed -i -e "s|^prefix=${_prefix}\$|prefix=${srcdir}/stage${_prefix}|" \
+         -e 's|-L\${[a-z]*}[^ ]* *||g' \
+    "$srcdir/stage${_prefix}"/lib/pkgconfig/*.pc
+}
+
+build() {
+  local stage="$srcdir/stage"
+  local -a meson_opts=(
+    --prefix="$_prefix"
+    --buildtype=plain
+    --wrap-mode=nodownload
+    -Db_ndebug=true
+  )
+  # Set through the environment rather than -Dpkg_config_path, which VLC
+  # would record in the configure line shown by vlc --version
+  export PKG_CONFIG_PATH="$stage${_prefix}/lib/pkgconfig"
+  export LIBRARY_PATH="$stage${_prefix}/lib"
+  # Find the bundled libraries in /opt/vlc at runtime; lib/vlc holds
+  # libvlc_xcb_events, which the X11 video outputs need. rpath-link lets
+  # the linker resolve the staged libraries' own dependencies.
+  export LDFLAGS="$LDFLAGS -Wl,-rpath,${_prefix}/lib:${_prefix}/lib/vlc -Wl,-rpath-link,$stage${_prefix}/lib"
+
+  # 1. VLC without the media library, which needs libvlc to build
+  meson setup build-vlc vlc "${meson_opts[@]}" -Dvulkan=disabled
+  meson compile -C build-vlc
+  meson install -C build-vlc --destdir "$stage" --quiet
+  _stage_pkgconfig
+
+  # 2. libvlcpp (headers only) and medialibrary
+  meson setup build-libvlcpp libvlcpp "${meson_opts[@]}" -Dtests=disabled -Dexamples=disabled
+  meson install -C build-libvlcpp --destdir "$stage" --quiet
+  _stage_pkgconfig
+  meson setup build-medialibrary medialibrary "${meson_opts[@]}" -Dtests=disabled
+  meson compile -C build-medialibrary
+  meson install -C build-medialibrary --destdir "$stage" --quiet
+  _stage_pkgconfig
+
+  # 3. VLC again, now that the media library plugin can be built
+  meson setup --reconfigure build-vlc vlc
+  meson compile -C build-vlc
+}
+
+package() {
+  local opt="$pkgdir${_prefix}"
+
+  meson install -C build-vlc --destdir "$pkgdir" --quiet
+  meson install -C build-medialibrary --destdir "$pkgdir" --quiet
+
+  # The plugin cache is generated by the .install script once the stripped
+  # plugins are in place
+  rm -f "$opt/lib/vlc/plugins/plugins.dat"
+
+  install -d "$pkgdir/usr/bin"
+  ln -s "${_prefix}/bin/vlc" "$pkgdir/usr/bin/vlc"
+
+  # Desktop entry from the upstream template, named VLC. This build does
+  # not have the --started-from-file option the template passes.
+  local mimetypes
+  mimetypes=$(sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' vlc/share/vlc.desktop.mimetypes | tr '\n' ';')
+  sed -e 's|@bindir@|/usr/bin|g' \
+      -e 's| --started-from-file||' \
+      -e "s|@MIMETYPES@|${mimetypes}|" \
+      -e '/^Name\[/d' \
+      -e 's/^Name=.*/Name=VLC/' \
+      vlc/share/vlc.desktop.in > vlc.desktop
+  install -Dm644 vlc.desktop "$pkgdir/usr/share/applications/vlc.desktop"
+
+  local size
+  for size in 16 32 48 128 256; do
+    install -Dm644 "vlc/share/icons/${size}x${size}/vlc.png" \
+      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/vlc.png"
+  done
+  install -Dm644 vlc/share/vlc512x512.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/vlc.png"
+
+  install -Dm644 vlc/COPYING vlc/COPYING.LIB -t "$pkgdir/usr/share/licenses/$pkgname/"
+}

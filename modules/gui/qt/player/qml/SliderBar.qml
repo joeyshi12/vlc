@@ -246,6 +246,8 @@ T.ProgressBar {
     HoverHandler {
         id: hoverHandler
 
+        cursorShape: Qt.PointingHandCursor
+
         onHoveredChanged: () => {
             if (hovered) {
                 if(Player.hasChapters)

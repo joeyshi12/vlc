@@ -220,4 +220,10 @@ T.ItemDelegate {
             }
         }
     }
+
+    // Show the hand cursor over clickable controls
+    HoverHandler {
+        enabled: root.enabled
+        cursorShape: Qt.PointingHandCursor
+    }
 }

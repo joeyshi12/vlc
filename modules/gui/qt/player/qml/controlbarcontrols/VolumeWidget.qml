@@ -370,6 +370,7 @@ T.Pane {
                 anchors.fill: parent
 
                 acceptedButtons: (Qt.LeftButton | Qt.RightButton)
+                cursorShape: root.paintOnly ? Qt.ArrowCursor : Qt.PointingHandCursor
 
                 onPressed: (mouse) => {
                     if (root.paintOnly) {

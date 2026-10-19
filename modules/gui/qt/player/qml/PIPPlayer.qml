@@ -148,6 +148,9 @@ T.Control {
         Item {
             id: videoFrame
 
+            readonly property real radius: VLCStyle.dp(8, VLCStyle.scale)
+            readonly property real borderWidth: VLCStyle.dp(2, VLCStyle.scale)
+
             Layout.fillWidth: true
             Layout.margins: VLCStyle.dp(8, VLCStyle.scale)
             Layout.bottomMargin: 0
@@ -157,7 +160,7 @@ T.Control {
             Rectangle {
                 anchors.fill: parent
                 visible: !Player.hasVideoOutput
-                radius: VLCStyle.dp(8, VLCStyle.scale)
+                radius: videoFrame.radius
                 color: Qt.lighter(theme.bg.primary, 1.3)
 
                 Image {
@@ -186,6 +189,7 @@ T.Control {
             // Darkens the video while the controls are shown.
             Rectangle {
                 anchors.fill: parent
+                radius: videoFrame.radius
                 color: Qt.rgba(0, 0, 0, 0.65)
                 opacity: root._controlsShown ? 1 : 0
 
@@ -194,12 +198,32 @@ T.Control {
                 }
             }
 
+            // The video is shown through a transparent part of the interface,
+            // so clipping and rounding in QML do not apply to it. Instead, paint
+            // the corners outside the rounded border in the card colour, with a
+            // ring around the frame. The ring's inner edge sits under the border
+            // stroke, so its anti-aliased edge does not let the video through.
+            // To cover a corner, the ring has to reach (sqrt(2) - 1) * radius
+            // beyond the frame's rounded edge.
+            Rectangle {
+                readonly property real inset: videoFrame.borderWidth / 2
+                readonly property real thickness: Math.ceil(videoFrame.radius / 2) + inset
+
+                anchors.fill: parent
+                anchors.margins: inset - thickness
+                radius: videoFrame.radius - inset + thickness
+                color: "transparent"
+                border.width: thickness
+                border.color: theme.bg.primary
+                antialiasing: true
+            }
+
             // Border of the video
             Rectangle {
                 anchors.fill: parent
                 color: "transparent"
-                radius: VLCStyle.dp(8, VLCStyle.scale)
-                border.width: VLCStyle.dp(2, VLCStyle.scale)
+                radius: videoFrame.radius
+                border.width: videoFrame.borderWidth
                 border.color: theme.bg.secondary
             }
 

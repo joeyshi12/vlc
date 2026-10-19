@@ -143,6 +143,7 @@ T.Control {
             HoverHandler {
                 id: mediaTimeHover
                 enabled: !root.paintOnly
+                cursorShape: Qt.PointingHandCursor
             }
 
             TapHandler {
@@ -313,6 +314,7 @@ T.Control {
             HoverHandler {
                 id: mediaRemainingTimeHover
                 enabled: !root.paintOnly
+                cursorShape: Qt.PointingHandCursor
             }
 
             TapHandler {

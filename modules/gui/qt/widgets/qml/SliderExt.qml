@@ -132,6 +132,7 @@ T.Slider {
         id: hoverHandler
 
         enabled: true
+        cursorShape: Qt.PointingHandCursor
 
         target: background
     }

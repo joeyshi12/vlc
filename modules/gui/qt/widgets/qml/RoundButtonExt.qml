@@ -71,4 +71,10 @@ T.RoundButton {
         color: control.backgroundColor
         border.color: theme.border
     }
+
+    // Show the hand cursor over clickable controls
+    HoverHandler {
+        enabled: control.enabled
+        cursorShape: Qt.PointingHandCursor
+    }
 }
